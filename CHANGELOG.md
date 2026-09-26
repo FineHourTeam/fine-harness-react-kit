@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.9.0 (2026-09-26)
+
+### 달라진 것
+- **에이전트가 규칙끼리 부딪혀 멈추던 문제 해소.** 같은 작업을 키트 있음·없음으로 반복 실행해 측정해 보니, 키트 쪽 실패의 전부가
+  규칙 모순 때문에 코드를 한 줄도 바꾸지 않고 "승인 필요"로 멈춘 경우였다. 규칙을 다음처럼 정리했다:
+  - `npx shadcn@latest add`는 승인 없이 바로 (packages.md 리치포 맵의 동반 패키지 포함). 손으로 만든 ui 컴포넌트·기존 ui 파일 수정만 에스컬레이션.
+  - 사용자가 요청한 색은 tokens.css에 용도 토큰 추가·값 조정으로 처리 (상태색 빌려 쓰기 금지, 위계·스케일 변경만 에스컬레이션).
+  - 사용자가 직접 요청한 기능은 그 요청이 스펙 (스펙 파일이 없다고 멈추지 않음).
+  - 요청이 규칙과 부딪히면 멈추지 말고 규칙 안의 가장 가까운 방법으로 끝낸 뒤 보고에 이유를 적는다.
+- **설치 시 shadcn 설정·기본 컴포넌트를 미리 넣는다.** `components.json`·`src/lib/utils.ts` 복사, 루트·app tsconfig에 `paths`
+  (baseUrl 없이 — TS 6 TS5101), 기반 패키지(radix-ui·class-variance-authority·tw-animate-css·cn), `shadcn add button alert-dialog
+  sonner input`, App에 `<Toaster />`. `shadcn init`은 쓰지 않는다(키트 폰트·색을 덮어씀).
+- 편집 검사 훅: Tailwind 기본 팔레트 직접 사용(`bg-red-600` 등) 차단 추가. feature 간 import를 실제 경로로 판정 — 상대 경로로
+  다른 feature 내부를 가져오는 것을 잡고, `@/features/<이름>` 공개 API import는 더 이상 막지 않음.
+- INDEX: 긴 지식 문서는 `Grep`으로 해당 절만 읽기. 요청 기록은 `docs/questions.md`를 읽지 않고 번호만 확인 후 append.
+
+### 새로 써볼 수 있는 것
+- 확인창·토스트·버튼·입력창이 설치 직후부터 준비돼 있다 — "삭제 전에 확인받게 해줘", "저장하면 안내 띄워줘" 같은 요청이 바로 된다.
+
+### 업그레이드 시 할 일
+- React 프로젝트:
+  1. 키트의 `templates/react/components.json` → 프로젝트 루트, `templates/react/src/lib/utils.ts` → `src/lib/utils.ts`
+  2. 루트 `tsconfig.json`의 compilerOptions에 `"paths": { "@/*": ["./src/*"] }` (없으면 추가, **baseUrl은 넣지 않는다**)
+  3. `npm install radix-ui class-variance-authority tw-animate-css cn`
+  4. `src/styles/tokens.css` 맨 위 `@import "tailwindcss";` 다음 줄에 `@import "tw-animate-css";`
+  5. `npx shadcn@latest add button alert-dialog sonner input -y` (이미 있는 파일은 덮어쓸지 물으면 N) + App 최상단에 `<Toaster />`
+  6. `npx tsc -b --noEmit`로 확인
+- CLAUDE.md는 수동 병합 — "컴포넌트·패키지 우선", "모듈 경계", "에스컬레이션" 절의 바뀐 문장을 가져온다.
+
 ## v1.8.1 (2026-09-26)
 
 ### 달라진 것

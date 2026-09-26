@@ -515,12 +515,16 @@ Ops Loop 모듈은 Sentry 계정·GitHub PAT·프로덕션 URL 등 수동 개입
 /tmp/rcs/templates/react/src/app/use-auth-state.ts        → ./src/app/use-auth-state.ts (FIREBASE_ENABLED=Y)
 /tmp/rcs/templates/react/src/app/protected-route.tsx      → ./src/app/protected-route.tsx (FIREBASE_ENABLED=Y)
 /tmp/rcs/templates/react/src/components/ui/README.md      → ./src/components/ui/README.md
+/tmp/rcs/templates/react/components.json                  → ./components.json (shadcn 설정 — `shadcn init` 대신. init은 폰트·색 토큰을 덮어쓴다)
+/tmp/rcs/templates/react/src/lib/utils.ts                 → ./src/lib/utils.ts
 /tmp/rcs/templates/react/src/test/setup.ts                → ./src/test/setup.ts
 ```
 
 설정 파일은 **example을 기준으로 기존 파일을 보강** (통째 덮어쓰기 금지 — diff 보여주고 승인):
 ```
 templates/react/tsconfig.app.example.json   → tsconfig.app.json에 strict 플래그·paths 반영
+(루트 tsconfig.json)                        → compilerOptions에 "paths": { "@/*": ["./src/*"] } 추가 (shadcn이 루트에서 별칭을 찾는다.
+                                               baseUrl은 넣지 않는다 — TS 6에서 TS5101 에러, pitfalls § Vite 생태계 전환기)
 templates/react/eslint.config.example.js    → eslint.config.js 기준 반영
 templates/react/vite.config.example.ts      → vite.config.ts에 alias·manualChunks·test 반영
 templates/react/.prettierrc.example         → .prettierrc
@@ -535,7 +539,8 @@ templates/ci/firebase-hosting-deploy.yml    → .github/workflows/firebase-hosti
 스택 기본 의존성 확인 — package.json에 없으면 추가 (CLAUDE.md 기술 스택과 일치):
 ```bash
 npm install @tanstack/react-query zustand react-router react-hook-form zod @hookform/resolvers \
-  react-i18next i18next lucide-react clsx tailwind-merge motion
+  react-i18next i18next lucide-react clsx tailwind-merge motion \
+  radix-ui class-variance-authority tw-animate-css cn   # shadcn 컴포넌트 기반 (init 없이 add만 하면 빠진다)
 npm install -D tailwindcss @tailwindcss/vite vitest @vitest/coverage-v8 jsdom @testing-library/react \
   @testing-library/jest-dom @testing-library/user-event prettier prettier-plugin-tailwindcss \
   eslint-plugin-jsx-a11y globals
@@ -548,6 +553,13 @@ npm install @sentry/react   # Sentry 연동 시
 (2026-07 파일럿 실측, pitfalls.md § Vite 생태계 전환기). 최신 Vite 템플릿은 lint 스크립트가
 `oxlint`로 생성된다 — `"lint": "eslint ."`로 교체하고 oxlint는 제거해도 된다 (표준은 ESLint 9 flat,
 rules.md § UI 금지 규칙들이 typescript-eslint type-checked 규칙에 의존).
+
+**shadcn 기본 컴포넌트 추가** (설치 직후 한 번 — 첫 기능에서 확인창·토스트가 없어 막히는 것 방지):
+```bash
+npx shadcn@latest add button alert-dialog sonner input -y
+```
+그다음 `src/App.tsx` 최상단에 `import { Toaster } from "@/components/ui/sonner"` + `<Toaster />` 1개를 마운트한다.
+`shadcn init`은 쓰지 않는다 — 키트의 tokens.css 폰트(Pretendard)·색을 덮어쓴다. 설정은 위에서 복사한 `components.json`이 대신한다.
 
 **Vite 스캐폴드 기본 코드 보정** (strictTypeChecked에서 에러 나는 3곳 — 설치 시 함께 수정):
 1. `src/main.tsx`: `document.getElementById('root')!` → null 가드로
@@ -665,6 +677,8 @@ bootstrap의 'React 베이스 코드 설치' 블록을 다시 실행하세요"�
 - [ ] `.claude/agents/` 아래 6개 에이전트 + GOVERNANCE.md 존재
 - [ ] `.claude/settings.json` + `.claude/hooks/` 3종(check-ui-rules.sh·check-starter-version.sh·check-deploy-web-assets.sh) 존재
 - [ ] (React 프로젝트인 경우) `scripts/check-web-assets.mjs` + package.json `prebuild`·`check:web-assets` 존재
+- [ ] (React 프로젝트인 경우) `components.json` + `src/components/ui/`에 button·alert-dialog·sonner·input + App에 `<Toaster />`
+      + 루트·app tsconfig 모두 `paths`(baseUrl 없음) — `npx tsc -b --noEmit` 통과
 - [ ] `.claude/output-styles/fluent-korean.md` + `LICENSE-fluent-korean.txt` 존재, settings.json에
       `"outputStyle": "fluent-korean"` 존재
 - [ ] `.claude/starter-version` 내용이 `/tmp/rcs/VERSION`과 동일

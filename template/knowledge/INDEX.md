@@ -3,10 +3,14 @@
 작업 시작 시 이 파일을 먼저 읽고, 아래 표에서 해당 상황의 참조 파일만 선택적 로드.
 **파일 역할**: 라우터 (라이트하게 유지)
 
+**읽는 법**: `rules.md`·`packages.md`·`unknown-unknowns.md`·`pitfalls.md`는 통째로 읽지 않는다 — `Grep`으로 가리킨
+§ 제목(또는 #번호)을 찾아 그 절만 `Read`(offset·limit)한다. 긴 문서를 통째로 넣으면 비용이 늘고 정작 필요한 규칙을 놓친다.
+
 ## 상황별 참조 순서
 
 ### 새 기능 추가
-1. docs/feature-spec.jsx — 스펙에 정의되어 있는지 확인 (없으면 에스컬레이션)
+1. docs/feature-spec.jsx — 있으면 해당 기능 정의를 확인. **사용자가 직접 요청한 기능은 그 요청이 스펙**이다 (스펙 파일이
+   없다는 이유로 멈추지 않는다 — 에스컬레이션은 요청 범위를 넘는 기능을 스스로 추가하려 할 때)
 2. knowledge/rules.md § 아키텍처 · § 상태관리(TanStack Query/Zustand) · § 라우팅(React Router)
 3. **knowledge/packages.md — 리치포 맵** (이 기능에 쓸 표준 패키지·shadcn 컴포넌트 확인, 손수 재구현 금지)
 4. knowledge/mistakes/recent.md — 같은 실수 방지

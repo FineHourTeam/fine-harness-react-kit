@@ -8,8 +8,8 @@
 - Firebase·AI 호출은 features/[기능]/api/ (repository)에서만 — 컴포넌트·훅에서 직접 금지
 - UI 텍스트·에러 메시지는 한국어 + 제품 톤·문체 유지 (rules.md § 한국어 카피 체크리스트)
 - 완료 전 검증: lint + typecheck + test + build 4종 필수
-- 컴포넌트·패키지 우선: UI는 shadcn/ui 카탈로그(`shadcn add`) — 손수 재구현 금지. 패키지는 packages.md
-  리치포 맵만, 새 런타임 의존성은 에스컬레이션. 모달·토스트는 공용 래퍼만
+- 컴포넌트·패키지 우선: UI는 shadcn/ui 카탈로그 — 없으면 `npx shadcn@latest add`로 바로 추가(승인 불필요).
+  손수 재구현 금지. 리치포 맵 밖 새 런타임 의존성만 에스컬레이션. 모달·토스트는 공용 래퍼만
 - 프로덕션 완결성: 정상·로딩·에러·빈 상태까지 구현해야 완료 — 목업/스텁/TODO/빈 핸들러를 실경로에
   남기지 않기. 부분 구현은 지시 시만 + 미구현 보고 (rules.md § 구현 완결성)
 - `any` 남용 금지, `dangerouslySetInnerHTML` 금지 (불가피하면 에스컬레이션 + sanitize)
@@ -56,7 +56,8 @@ index.ts(공개 API — 여기 없는 건 외부 import 금지)
 ## 모듈 경계 (요약)
 - features 간 직접 import 금지 (shared 경유·index.ts 공개 API만)
 - docs/: questions.md·insights.md만 · knowledge/: mistakes/recent.md만 에이전트 append
-- src/components/ui/·src/styles/ 추가·수정은 에스컬레이션
+- ui/: shadcn add는 자유, 손으로 만든 컴포넌트·기존 파일 수정은 에스컬레이션. tokens.css: 요청받은 색은
+  용도 토큰 추가·값 조정(라이트/다크 쌍)으로 처리, 위계·스케일 변경만 에스컬레이션
 - firestore.rules·storage.rules: 코드와 같은 커밋으로만 변경 (§ Firebase 보안규칙 대조)
 - 상세 표: rules.md § 모듈 경계
 
@@ -86,18 +87,19 @@ index.ts(공개 API — 여기 없는 건 외부 import 금지)
 같은 에러 수정 2회 실패 → 중단하고 시도 요약·근본원인·다른 접근 제안 후 사람 확인 (상세: INDEX § 버그/오류)
 
 ## 에스컬레이션 (중단하고 보고)
-- 스펙 없는 신규 기능 · 새 패키지 추가
+요청이 규칙과 부딪히면 멈추지 말고 규칙 안의 가장 가까운 방법으로 끝낸 뒤 보고에 이유를 적는다. 아래만 멈춘다:
+- 요청 범위 밖 신규 기능 · 리치포 맵 밖 새 패키지
 <!-- IF:FIREBASE_ENABLED -->
 - Firebase 프로젝트 설정·보안규칙 구조 변경
 <!-- END -->
 - API 키·시크릿·환경변수 (VITE_ = 번들 공개 상기)
-- src/components/ui/·src/styles/ 신규 추가 · 아키텍처 원칙 위반해야 풀리는 문제
+- 손으로 만든 ui 컴포넌트·토큰 위계 변경 · 아키텍처 원칙 위반해야 풀리는 문제
 - UI 명령 모호 (피그마·DESIGN·유사 화면 참조 불가) · 톤앤매너 충돌 기획
 
 ## 로그 규칙
 
 ### 요청 로깅 (매번)
-수행 전 docs/questions.md에 append:
+수행 전 docs/questions.md에 append (파일을 읽지 말고 `grep -c '^### 요청'`로 번호만 확인 후 `cat >>`):
 ```
 ## YYYY-MM-DD
 

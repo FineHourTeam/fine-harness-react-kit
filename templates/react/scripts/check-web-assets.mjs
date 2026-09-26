@@ -13,7 +13,7 @@
 //   - Googlebot이 홈페이지를, Googlebot-Image가 파비콘을 크롤할 수 있어야 함 (robots.txt 차단 금지)
 //   - 파비콘 URL은 자주 바꾸지 않는다 / 반영까지 며칠~몇 주 — Search Console URL 검사로 재크롤 요청 가능
 import { existsSync, readFileSync } from "node:fs";
-import { extname, join } from "node:path";
+import { join } from "node:path";
 
 const args = process.argv.slice(2);
 const STRICT = args.includes("--strict") || process.env.WEB_ASSETS_STRICT === "1";

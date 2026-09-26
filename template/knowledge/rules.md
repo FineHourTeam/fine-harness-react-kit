@@ -109,8 +109,8 @@
 | src/features/[기능]/ | 다른 기능에서 직접 import 금지 (index.ts 공개 API만) |
 | src/features/[기능]/api/ | Firebase·AI 호출은 여기서만 |
 | src/features/[기능]/hooks/ | TanStack Query 훅·로컬 훅. Firebase SDK 직접 호출 금지 |
-| src/components/ui/ | 공용 컴포넌트 (shadcn/ui 패턴). README.md 먼저 확인. 추가·수정은 에스컬레이션 |
-| src/styles/ | 디자인 토큰 (tokens.css). 수정은 에스컬레이션 |
+| src/components/ui/ | 공용 컴포넌트 (shadcn/ui 패턴). README.md 먼저 확인. `npx shadcn@latest add`는 승인 없이 허용, 손으로 만든 컴포넌트 추가·기존 파일 수정은 에스컬레이션 |
+| src/styles/ | 디자인 토큰 (tokens.css). 사용자가 요청한 색·값은 용도 토큰 추가·값 조정으로 허용(라이트/다크 쌍), 위계·스케일·폰트 체계 변경은 에스컬레이션 |
 | src/lib/ | firebase.ts·queryClient.ts·utils 등 공용 인프라. 사람 승인 필요 영역 |
 | src/app/ | 라우터·프로바이더·전역 에러 바운더리 |
 | src/stores/ | 전역 Zustand 스토어 (feature 전용은 feature 안에) |
@@ -194,6 +194,9 @@ destructive · success · warning · border · input · ring.
 - **팔레트는 총 3~5색(hue 기준)** — 브랜드 1 + 뉴트럴 1~2(배경·보더·뮤티드 계열) + 액센트 0~2.
   시맨틱 상태색 3종(destructive/success/warning)은 카운트 예외(단, 상태 표시 외 용도 사용 금지).
   5색 초과는 사람 승인 없이 금지.
+- **사용자가 특정 요소의 색을 명시 요청하면 멈추지 않는다** — 맞는 시맨틱 토큰이 있으면 그걸 쓰고, 없으면 tokens.css에
+  용도 이름 토큰(예: `--cta` + `--cta-foreground`, 라이트/다크 쌍 + `@theme` 등록)을 추가하거나 `--primary` 값을 조정해
+  진행한다. 상태색(destructive 등)을 상태 표시 외 용도로 빌려 쓰지 않는다. 5색 상한을 넘게 되면 완료 보고에 적는다.
 - **사용자가 명시 요청하지 않는 한 보라·인디고·기본 블루를 주조색으로 쓰지 않는다** —
   LLM이 기본으로 고르는 색이라 "AI가 만든 티"의 대표 신호다. 브랜드색은 반드시 프로젝트에서 결정.
 - **콘트라스트 페어**: `bg-{토큰}`을 지정·변경하면 반드시 대응 `text-{토큰}-foreground`를 함께
@@ -252,7 +255,9 @@ destructive · success · warning · border · input · ring.
 - **토스트**: 공용 Toast(sonner 등 1개로 고정)만 — 화면별 알림 UI 자작 금지.
 - **페이지 뼈대**: 공통 레이아웃(헤더·사이드바·max-width·패딩)은 layout 컴포넌트로 — 화면마다
   손으로 조립하지 않는다.
-- 필요한 래퍼가 ui/에 아직 없으면: feature 안에서 임시로 만들지 말고 **ui/ 추가 에스컬레이션**.
+- 필요한 래퍼가 ui/에 아직 없으면: feature 안에서 임시로 만들지 말고 **`npx shadcn@latest add alert-dialog`(확인창)·
+  `sonner`(토스트)·`dialog` 등으로 바로 추가**한다 — 승인 불필요 (packages.md 리치포 맵 표준 채택). 카탈로그에 없는
+  래퍼를 손으로 만들어야 할 때만 에스컬레이션.
 - 이 규칙은 `.claude/hooks/check-ui-rules.sh` 훅이 결정론적으로도 검사한다 (어기면 즉시 피드백).
 
 ---
@@ -490,11 +495,11 @@ permission-denied를 기다리면 늦다. 대조 방법·함정(affectedKeys, li
 - base: main
 
 ### 에스컬레이션
-- 스펙 없는 신규 기능
-- 새 패키지 추가
+- 요청 범위를 넘는 신규 기능 (사용자가 요청한 기능은 스펙이 있는 것으로 본다)
+- packages.md 리치포 맵 밖 새 런타임 패키지 (shadcn add와 그 동반 패키지는 제외)
 - Firebase 설정·보안규칙 구조 변경
 - API 키·시크릿
-- src/components/ui/·src/styles/·src/lib/ 신규 추가
+- 손으로 만든 ui 컴포넌트 · 토큰 위계·스케일 변경 · src/lib/ 신규 모듈
 - 아키텍처 원칙 위반해야 풀리는 문제
 - UI 명령 모호
 - 톤앤매너 충돌 기획
