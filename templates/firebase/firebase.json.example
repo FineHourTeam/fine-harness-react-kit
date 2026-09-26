@@ -1,0 +1,49 @@
+{
+  "_comment": "firebase.json 표준 예시 — SPA rewrite + 캐시 전략 + 보안 헤더. 프로젝트 firebase init 후 hosting 섹션을 이 기준으로 맞출 것. CSP의 도메인 목록은 실제 사용하는 서비스(Firebase·Sentry 등)에 맞춰 조정.",
+  "hosting": {
+    "public": "dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "_rewrites_comment": "Cloud Function을 쓰면 /api/** 프록시로 같은 오리진화(CORS 회피, docs/CORS.md). functionId·region을 실제 함수에 맞추고, 함수를 안 쓰면 /api 항목 제거. /api는 반드시 SPA catch-all(**)보다 먼저.",
+    "rewrites": [
+      { "source": "/api/**", "function": { "functionId": "api", "region": "asia-northeast3", "pinTag": true } },
+      { "source": "**", "destination": "/index.html" }
+    ],
+    "headers": [
+      {
+        "source": "/index.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "X-Frame-Options", "value": "DENY" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+          { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net wss://*.firebaseio.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io; frame-src 'self' https://*.firebaseapp.com; object-src 'none'; base-uri 'self'"
+          }
+        ]
+      },
+      {
+        "source": "/assets/**",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      },
+      {
+        "source": "**/*.@(png|svg|ico|webp|woff2)",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "emulators": {
+    "auth": { "port": 9099 },
+    "firestore": { "port": 8080 },
+    "storage": { "port": 9199 },
+    "ui": { "enabled": true }
+  }
+}

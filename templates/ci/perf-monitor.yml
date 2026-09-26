@@ -1,0 +1,76 @@
+# setup-perf-monitor 스킬 참조 — .github/workflows/perf-monitor.yml로 복사해서 사용
+# Pull형 Ops Loop: 주 1회 프로덕션 URL을 Lighthouse로 측정해 성능 예산(rules.md § 빌드/배포)
+# 대비 회귀 시 이슈를 생성/갱신한다. 스토어 리뷰 모니터링의 웹 대응물.
+#
+# ⚠️ 랩 측정 한계: INP는 실사용자 지표라 Lighthouse(랩)에서는 TBT가 대리 지표다.
+#    실사용 INP는 Sentry 성능 트레이스 또는 CrUX에서 별도 확인.
+#
+# [PRODUCTION_URL] 치환할 것 (예: https://myapp.web.app)
+
+name: Perf Monitor
+
+on:
+  schedule:
+    - cron: '0 22 * * 0' # 매주 월요일 07:00 KST
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lighthouse 측정 (모바일 프로파일 3회 중앙값)
+        id: lhci
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            [PRODUCTION_URL]
+          runs: 3
+          configPath: ./lighthouserc.json
+          uploadArtifacts: true
+
+      - name: 예산 위반 시 이슈 생성/갱신
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          BODY=$(cat <<EOF
+          ## ⚠️ 성능 예산 위반 감지 — $(date -u +%Y-%m-%d)
+
+          주간 Lighthouse 측정에서 성능 예산(lighthouserc.json assertions)을 위반했습니다.
+
+          - 측정 대상: [PRODUCTION_URL]
+          - 상세 리포트: $RUN_URL (Artifacts의 lhci 리포트)
+          - 예산 기준: knowledge/rules.md § 빌드/배포 성능 예산
+            (LCP < 2.5s / CLS < 0.1 / TBT — INP 랩 대리 지표 / 초기 JS ≤ 250KB)
+
+          ### 확인 순서
+          1. Artifacts 리포트에서 위반 지표 확인
+          2. 최근 머지된 PR 중 번들·이미지·서드파티 추가분 의심
+          3. 수정 후 workflow_dispatch로 재측정
+          EOF
+          )
+          EXISTING=$(gh issue list --state open --search "⚠️ 성능 예산 위반 in:title" \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "⚠️ 성능 예산 위반 감지" --body "$BODY" --label performance || \
+            gh issue create --title "⚠️ 성능 예산 위반 감지" --body "$BODY"
+          fi
+
+      - name: 결과 요약
+        if: always()
+        run: |
+          if [ "${{ steps.lhci.outcome }}" = "success" ]; then
+            echo "✅ 성능 예산 통과"
+          else
+            echo "⚠️ 예산 위반 — 이슈 생성/갱신됨"
+          fi

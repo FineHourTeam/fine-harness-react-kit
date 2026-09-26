@@ -1,0 +1,51 @@
+{
+  "outputStyle": "fluent-korean",
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint*)",
+      "Bash(npm run typecheck*)",
+      "Bash(npm run test*)",
+      "Bash(npm run build*)",
+      "Bash(npm run format*)",
+      "Bash(npx tsc*)",
+      "Bash(npx vitest run*)",
+      "Bash(npx prettier --check*)",
+      "Bash(npx eslint*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-deploy-web-assets.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-starter-version.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-ui-rules.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
