@@ -10,7 +10,12 @@
       "Bash(npx tsc*)",
       "Bash(npx vitest run*)",
       "Bash(npx prettier --check*)",
-      "Bash(npx eslint*)"
+      "Bash(npx eslint*)",
+      "Bash(npx prettier --write*)",
+      "Bash(npx shadcn@latest add*)",
+      "Bash(npm run check:web-assets*)",
+      "Bash(grep -c*)",
+      "Bash(cat >> docs/questions.md*)"
     ]
   },
   "hooks": {
@@ -43,6 +48,17 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/check-ui-rules.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-done.sh",
+            "timeout": 300
           }
         ]
       }

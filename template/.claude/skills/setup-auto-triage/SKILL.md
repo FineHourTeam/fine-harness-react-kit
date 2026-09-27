@@ -9,6 +9,10 @@ allowed-tools: Bash, Read, Write, Edit
 
 # AutoTriage 설치 (Pull형 Ops Loop 모듈)
 
+> **키트 원본 파일이 필요하다.** 아래 `templates/…` 경로는 키트 저장소 기준이다 — 설치 뒤에는 프로젝트에 없으므로 먼저
+> `[ -d /tmp/rcs ] || git clone --depth 1 https://github.com/FineHourTeam/fine-harness-react-kit.git /tmp/rcs`로 받고
+> `/tmp/rcs/templates/…`에서 복사한다. 끝나면 `rm -rf /tmp/rcs`.
+
 > Push형(Sentry AutoFix)이 "사건 하나에 즉시 반응"이라면, 이 모듈은 **쌓인 상태를 매일 한 번 훑어서
 > 우선순위를 매기는 다이제스트**다. 개별 이슈마다 알림을 쏘는 대신, 고정 이슈 1개
 > ("📋 AutoTriage 다이제스트")를 매일 갱신한다 — 보고만 하고 코드는 건드리지 않는다.
@@ -64,4 +68,4 @@ gh run watch
 - 코드 수정·PR 생성 없음 — 다이제스트에서 수정이 필요한 항목은 사람이 세션에서 지시
 ```
 
-`docs/setup-checklist.md`의 Ops Loop 항목 체크 안내.
+`docs/setup-checklist.md` **O2** 체크 안내.

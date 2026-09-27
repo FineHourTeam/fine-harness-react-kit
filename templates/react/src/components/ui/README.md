@@ -26,10 +26,12 @@ npx shadcn@latest add button dialog input card sonner
 
 ## 규칙
 
-- 스타일 변형은 컴포넌트의 `variant`/`size` prop(cva)이 소유 — 새 변형이 필요하면 variant 추가
-  (기존 ui 파일 수정이라 에스컬레이션), 화면에서 className 색 덮어쓰기 금지.
+- 스타일 변형은 컴포넌트의 `variant`/`size` prop(cva)이 소유 — 새 변형이 필요하면 variant를 추가하고 보고한다
+  (기존 variant의 모양을 바꾸는 것만 에스컬레이션), 화면에서 className 색 덮어쓰기 금지.
+- 이 폴더에서 에이전트가 승인 없이 하는 일: `shadcn add` · 아이콘 import를 프로젝트 세트로 교체 · variant 추가 · 아래 표 등록.
+  shadcn 원본 코드의 arbitrary value(`rounded-[4px]` 등)는 편집 훅 검사 대상에서 빠진다.
 - 색·간격·라운드는 tokens.css 토큰만 (rules.md § 디자인).
-- 아이콘 버튼은 `aria-label` 필수.
+- 아이콘은 `@/components/icons` 프로젝트 세트만 (lucide 등 기본 팩 금지 — `shadcn add`로 들어온 lucide import는 바로 교체). 아이콘 버튼은 `aria-label` 필수.
 - 프로젝트 전용 조합 컴포넌트(예: PageHeader, EmptyState)는 `src/components/` (ui/ 밖)에 두고
   이 README 하단에 별도 표로 등록.
 

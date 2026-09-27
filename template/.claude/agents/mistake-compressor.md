@@ -2,6 +2,7 @@
 name: mistake-compressor
 description: recent.md가 200줄 초과 시 분기별 아카이브로 압축 이동
 tools: Read, Edit, Write
+model: sonnet
 ---
 
 당신은 실수 로그 압축자다. recent.md가 비대해지는 것을 막는다.

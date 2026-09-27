@@ -121,8 +121,8 @@ Firebase 작업 → #1~13 / 렌더링·훅·UI → #14~26 / 상태관리·라우
     입력 반응 200ms 초과. startTransition·가상화(목록 100개 이상은 virtualizer)·Web Worker 검토.
 44. **Context value에 매 렌더 새 객체를 넣으면 소비자 전체가 리렌더** — value={{user, setUser}}를
     useMemo 없이 넘기는 패턴. Context는 저빈도 값 전용 + value 메모이제이션.
-45. **date 라이브러리·아이콘 팩 전체 import가 번들 상위 단골** — lucide-react는 개별 named
-    import(트리셰이킹 OK)지만, 다른 팩 혼용·`import * as Icons` 패턴은 수백 KB를 부른다.
+45. **date 라이브러리·아이콘 전체 import가 번들 상위 단골** — `import * as Icons` 패턴은 수백 KB를 부른다. 프로젝트 아이콘
+    세트도 개별 named import(`import { DeleteIcon } from "@/components/icons"`)로 — index.ts는 re-export만 두어 트리셰이킹이 되게.
 46. **React Compiler를 켰다면 수동 useMemo/useCallback 추가 전에 컴파일러 적용 여부 먼저 확인** —
     이중 메모이제이션은 이득 없이 코드만 복잡해진다. 컴파일러 규칙 위반(eslint react-hooks v6
     권고)부터 고치는 게 순서.
@@ -167,4 +167,4 @@ Firebase 작업 → #1~13 / 렌더링·훅·UI → #14~26 / 상태관리·라우
   practices, Vite env 문서·시크릿 유출 사례 보고, Sentry React 가이드, web.dev Core Web Vitals,
   shadcn/ui Tailwind v4 문서.
 - 이 목록에 없는 새 함정을 프로젝트에서 실제로 겪으면 이 문서가 아니라 `knowledge/pitfalls.md`
-  (사후 기록)에 남긴다 — 이 문서는 "미리 아는 것"만.
+  (사후 기록)에 추가를 **제안**한다(pitfalls.md는 사람만 수정) — 이 문서는 "미리 아는 것"만.

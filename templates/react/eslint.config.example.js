@@ -33,6 +33,11 @@ export default tseslint.config(
     },
     rules: {
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      // 기본 아이콘 팩 금지 — 아이콘은 @/components/icons 프로젝트 세트만 (rules.md § 아이콘 규칙)
+      "no-restricted-imports": ["error", { patterns: [{
+        regex: "^(lucide-react|lucide|react-icons(/.*)?|@heroicons/react(/.*)?|@tabler/icons-react|@phosphor-icons/react|phosphor-react|@radix-ui/react-icons|react-feather|@mui/icons-material(/.*)?|iconsax-react|@iconify/react|react-bootstrap-icons|@fortawesome/.*|@remixicon/react|@hugeicons/react)$",
+        message: "기본 아이콘 팩 대신 @/components/icons의 프로젝트 아이콘을 쓴다. 없으면 src/components/icons/README.md대로 새로 그린다.",
+      }] }],
       // any 차단 — unknown + 좁히기 (rules.md § UI 금지)
       "@typescript-eslint/no-explicit-any": "error",
       // @ts-ignore 금지, @ts-expect-error는 사유 필수

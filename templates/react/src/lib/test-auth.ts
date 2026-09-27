@@ -61,7 +61,7 @@ export async function testPhoneSignIn(phone: string, code: string): Promise<User
     throw new Error(`테스트 전화번호 형식 아님 (010 + 8자리): ${phone}`);
   }
   if (code !== TEST_AUTH.phoneCode) {
-    throw new Error("테스트 인증번호가 올바르지 않습니다 (123456).");
+    throw new Error(`테스트 인증번호 불일치 (${TEST_AUTH.phoneCode})`);
   }
   const synthetic = `phone-${digits}@${TEST_AUTH.emailDomain}`;
   return signInOrCreate(synthetic, TEST_AUTH.password);

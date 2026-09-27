@@ -60,6 +60,7 @@ README·기획 문서(docs/plan.md 등)가 있으면 읽고 컨셉·톤도 추�
 - `{{BRAND_WORLD}}` (설명 또는 빈 문자열)
 - `{{DESIGN_SYSTEM_SOURCE}}` (git URL / "Figma" / "없음")
 - `{{SPEECH_LEVEL}}` (해요체 / 합쇼체)
+- `{{HOSTING_SITE}}` · `{{PRODUCTION_DOMAIN}}` (Firebase Hosting 사이트 ID · 도메인 — 모르면 "미정", setup-checklist P1·P4에 남김)
 - `{{TODAY}}` (오늘 날짜 YYYY-MM-DD 형식, 자동)
 
 ---
@@ -229,8 +230,12 @@ VITE_USE_EMULATORS=true
 
 ```bash
 firebase init hosting     # public: dist, SPA rewrite: Yes, GitHub 자동 배포: No(우리 템플릿 사용)
+firebase init firestore   # firestore.rules · firestore.indexes.json 생성
+firebase init storage     # storage.rules 생성
 firebase init emulators   # auth, firestore, storage 선택
 ```
+생성된 `firestore.rules`·`storage.rules`는 **전부 막힘으로 시작**한다 (`allow read, write: if false;`) — 테스트 모드 규칙이
+만들어졌으면 바꾼다. 기능을 만들 때 그 경로만 연다 (rules.md § Firebase 보안규칙 대조).
 생성된 `firebase.json`을 `templates/firebase/firebase.json.example` 기준으로 보강
 (캐시 헤더·보안 헤더·CSP — 사용자에게 diff 보여주고 승인).
 
@@ -298,11 +303,11 @@ N이면 setup-checklist.md에 `[미등록 — 에러 모니터링 착수 시]`�
 
 사용자에게 질문: **에이전트 자동화 스케줄을 설정하나요?** (Y/N)
 
-에이전트 2개가 매일 자동으로 실행됩니다:
+에이전트 2개가 매주 자동으로 실행됩니다:
 - `@rule-promoter` — recent.md에서 반복 패턴을 찾아 `docs/proposals.md`에 승격 제안 기록
-- `@mistake-compressor` — recent.md가 200줄 초과 시 archive/로 압축 후 커밋
+- `@mistake-compressor` — recent.md가 200줄을 넘었을 때만 archive/로 압축 (안 넘었으면 아무것도 안 함)
 
-Y인 경우: Claude Code에서 `/schedule` 실행 안내 (저장소 URL + 매일 09:00 + 두 에이전트 역할 설명).
+Y인 경우: Claude Code에서 `/schedule` 실행 안내 (저장소 URL + 매주 월요일 09:00 + 두 에이전트 역할 설명).
 N인 경우: 수동 실행 안내 (`@rule-promoter` 주 1회 / `@mistake-compressor` 200줄 초과 시).
 
 ---
@@ -325,7 +330,8 @@ Step 0 질문 7의 `{{DESIGN_SYSTEM_SOURCE}}`로 분기. 목적: 개발 시작 �
 4. `templates/react/src/styles/tokens.css`를 베이스로 값만 치환해
    `src/styles/tokens.css` 생성 (shadcn 위계에 매핑).
 5. `knowledge/design-system.md`의 **소스 URL·토큰 매핑표·마지막 동기화일**을 채운다.
-6. 확인: `npm run build` 통과 + 라이트/다크 양쪽에서 토큰이 정의됐는지.
+6. 확인: `npm run build` 통과 + 라이트/다크 양쪽에서 토큰이 정의됐는지 + `npx vitest run src/styles`(명도 대비 4.5:1) 통과 —
+   브랜드색이 미달이면 `*-foreground`를 조정하거나 더 진한 값을 제안한다. 배경은 `--background` #ffffff·`--background-subtle` #f9f9f9 고정.
 
 **"Figma"인 경우**: F단계 토큰으로 Figma에서 추출하고, 4~6을 동일 적용.
 
@@ -394,7 +400,7 @@ im-not-ai(`/humanize-scan`·`/humanize-korean` — 랜딩·온보딩·이메일�
    지금 안 해도 됩니다 — 산문 카피 작업을 시작할 때 하면 됨.
 ```
 
-설치 여부를 `docs/setup-checklist.md` § 한국어 품질 도구에 기록하고 계속 진행 (블로커 아님).
+설치 여부를 `docs/setup-checklist.md` **T7**에 기록하고 계속 진행 (블로커 아님).
 
 ---
 
@@ -414,7 +420,7 @@ AI:        ⏭️ 키 미수령 (착수 시 Functions 시크릿 — 기본 정�
 Figma:     ⏭️ 건너뜀
 디자인:    ✅ <소스> → src/styles/tokens.css 생성 + design-system.md 매핑표 기록
            (또는 ⏭️ 시드 팔레트)
-스케줄:    ✅ rule-promoter + mistake-compressor 매일 09:00 (또는 ⏭️ 수동 실행)
+스케줄:    ✅ rule-promoter + mistake-compressor 매주 월요일 09:00 (또는 ⏭️ 수동 실행)
 MCP:       ✅ firebase → .mcp.json (제품: firestore, auth, ...) — 새 세션부터 활성
 브라우저:  ✅ Claude in Chrome 연결됨 (또는 ⏭️ 미설치)
 한국어:    ✅ fluent-korean output-style (Step 2 자동, 새 세션부터) · im-not-ai ✅ 전역 설치됨 (또는 ⏭️ 미설치)
@@ -472,10 +478,11 @@ template/.claude/settings.json                  → ./.claude/settings.json
 template/.claude/hooks/check-ui-rules.sh        → ./.claude/hooks/check-ui-rules.sh
 template/.claude/hooks/check-deploy-web-assets.sh → ./.claude/hooks/check-deploy-web-assets.sh
 template/.claude/hooks/check-starter-version.sh → ./.claude/hooks/check-starter-version.sh
+template/.claude/hooks/check-done.sh          → ./.claude/hooks/check-done.sh
 template/.claude/output-styles/fluent-korean.md → ./.claude/output-styles/fluent-korean.md
 template/.claude/output-styles/LICENSE-fluent-korean.txt → ./.claude/output-styles/LICENSE-fluent-korean.txt
 template/.gitattributes                         → ./.gitattributes (이미 있으면 *.sh eol=lf 줄만 append)
-template/.claude/skills/<스킬>/SKILL.md          → ./.claude/skills/<스킬>/SKILL.md
+template/.claude/skills/<스킬>/                  → ./.claude/skills/<스킬>/ (폴더 통째 — SKILL.md와 LICENSE 등 함께)
                                                   (template/.claude/skills/ 아래 폴더 전부 — 목록을 하드코딩하지 말 것)
 VERSION                                         → ./.claude/starter-version (설치된 스타터킷 버전 — 훅·/update-starter가 읽음)
 ```
@@ -495,6 +502,7 @@ Ops Loop 모듈은 Sentry 계정·GitHub PAT·프로덕션 URL 등 수동 개입
 
 ```
 /tmp/rcs/templates/react/src/styles/tokens.css            → ./src/styles/tokens.css (H단계에서 값 치환됐으면 그 결과 사용)
+/tmp/rcs/templates/react/src/styles/tokens.contrast.test.ts → ./src/styles/tokens.contrast.test.ts (배경/글자 쌍 명도 대비 4.5:1 검사)
 /tmp/rcs/templates/react/src/lib/firebase.ts              → ./src/lib/firebase.ts   (FIREBASE_ENABLED=Y)
 /tmp/rcs/templates/react/src/lib/env.ts                   → ./src/lib/env.ts
 /tmp/rcs/templates/react/src/lib/query-client.ts          → ./src/lib/query-client.ts
@@ -539,7 +547,7 @@ templates/ci/firebase-hosting-deploy.yml    → .github/workflows/firebase-hosti
 스택 기본 의존성 확인 — package.json에 없으면 추가 (CLAUDE.md 기술 스택과 일치):
 ```bash
 npm install @tanstack/react-query zustand react-router react-hook-form zod @hookform/resolvers \
-  react-i18next i18next lucide-react clsx tailwind-merge motion \
+  react-i18next i18next clsx tailwind-merge motion \
   radix-ui class-variance-authority tw-animate-css cn   # shadcn 컴포넌트 기반 (init 없이 add만 하면 빠진다)
 npm install -D tailwindcss @tailwindcss/vite vitest @vitest/coverage-v8 jsdom @testing-library/react \
   @testing-library/jest-dom @testing-library/user-event prettier prettier-plugin-tailwindcss \
@@ -560,6 +568,19 @@ npx shadcn@latest add button alert-dialog sonner input -y
 ```
 그다음 `src/App.tsx` 최상단에 `import { Toaster } from "@/components/ui/sonner"` + `<Toaster />` 1개를 마운트한다.
 `shadcn init`은 쓰지 않는다 — 키트의 tokens.css 폰트(Pretendard)·색을 덮어쓴다. 설정은 위에서 복사한 `components.json`이 대신한다.
+
+**프로젝트 아이콘 세트 만들기** (기본 아이콘 팩 금지 — rules.md § 아이콘 규칙):
+1. `templates/react/src/components/icons/`(icon.tsx·icon-style.ts·index.ts·README.md) → `src/components/icons/` 복사.
+2. **스타일 정하기**: Step 0의 PROJECT_CONCEPT·TONE_KEYWORDS(와 DESIGN_SYSTEM_SOURCE에 아이콘 규정이 있으면 그것)로
+   `icon-style.ts`(선 두께·끝 모양·꺾임·채움)와 README § 스타일 가이드 표(형태 언어·모서리·참고 인상 + "왜 이 값인가")를 채운다.
+   세 줄 요약을 사용자에게 보여주고 승인받는다 (예: "차분·신뢰 → 1.5 선, 둥근 끝, 선 아이콘, 모서리 r=2").
+3. **기본 세트 그리기**: 스타일 가이드대로 `createIcon`으로 새로 그린다 — 다른 아이콘 팩의 path를 복사하지 않는다.
+   최소 목록: 토스트 상태 5종(`SuccessIcon`·`InfoIcon`·`WarningIcon`·`ErrorIcon`·`LoadingIcon` — LoadingIcon은 `animate-spin`으로 쓰는
+   원호) + 자주 쓰는 8종(`CloseIcon`·`CheckIcon`·`ChevronDownIcon`·`ChevronRightIcon`·`AddIcon`·`DeleteIcon`·`EditIcon`·`SearchIcon`).
+   각각 `index.ts` export + README 목록 표.
+4. `src/components/ui/sonner.tsx`의 `lucide-react` import를 위 5종으로 교체한다 (`OctagonXIcon`→`ErrorIcon` 등).
+   이후 `shadcn add`로 들어오는 컴포넌트도 같은 방식으로 교체 — 끝내기 전 검사(`check-done.sh`)가 남은 import를 잡는다.
+5. 확인: `grep -rn "lucide-react" src` 결과 0줄 + `npx tsc -b --noEmit` 통과.
 
 **Vite 스캐폴드 기본 코드 보정** (strictTypeChecked에서 에러 나는 3곳 — 설치 시 함께 수정):
 1. `src/main.tsx`: `document.getElementById('root')!` → null 가드로
@@ -667,35 +688,50 @@ bootstrap의 'React 베이스 코드 설치' 블록을 다시 실행하세요"�
 
 ## Step 4: 설치 검증
 
-아래 항목 모두 통과해야 완료 처리:
+아래 항목이 모두 통과해야 완료 처리한다. 세 묶음은 겹치지 않는다 — **A 파일이 있는가 → B 돌려서 통과하는가 → C 내용이 맞는가**.
+조건부 묶음(React·Firebase)은 해당하지 않으면 통째로 건너뛴다.
 
-### 파일 존재 확인
-- [ ] `CLAUDE.md` 존재
-- [ ] `docs/questions.md`, `docs/insights.md`, `docs/proposals.md`, `docs/setup-checklist.md` 존재
-- [ ] `knowledge/INDEX.md`, `rules.md`, `pitfalls.md`, `unknown-unknowns.md`, `design-system.md`, `packages.md` 존재
-- [ ] `knowledge/mistakes/recent.md` + `archive/` 폴더 존재
-- [ ] `.claude/agents/` 아래 6개 에이전트 + GOVERNANCE.md 존재
-- [ ] `.claude/settings.json` + `.claude/hooks/` 3종(check-ui-rules.sh·check-starter-version.sh·check-deploy-web-assets.sh) 존재
-- [ ] (React 프로젝트인 경우) `scripts/check-web-assets.mjs` + package.json `prebuild`·`check:web-assets` 존재
-- [ ] (React 프로젝트인 경우) `components.json` + `src/components/ui/`에 button·alert-dialog·sonner·input + App에 `<Toaster />`
-      + 루트·app tsconfig 모두 `paths`(baseUrl 없음) — `npx tsc -b --noEmit` 통과
-- [ ] `.claude/output-styles/fluent-korean.md` + `LICENSE-fluent-korean.txt` 존재, settings.json에
-      `"outputStyle": "fluent-korean"` 존재
-- [ ] `.claude/starter-version` 내용이 `/tmp/rcs/VERSION`과 동일
-- [ ] `/tmp/rcs/template/.claude/skills/` 아래 스킬 폴더가 전부 `.claude/skills/`에 존재 (개수 일치)
-- [ ] (React 프로젝트인 경우) `src/styles/tokens.css` + `src/lib/`(env·query-client, Firebase 시
-      firebase.ts) + `src/components/ui/README.md` + i18n 3종 + `src/app/paths.ts` 존재,
-      기본 의존성 + scripts(lint/typecheck/test/build) 존재, `npm run lint`·`npm run typecheck` 통과
-- [ ] (Firebase 사용 시) `.env`에 VITE_FIREBASE_* 6종 + firebase.json + firestore.rules 존재
+### A. 파일 존재
 
-### 내용 검증
-- [ ] CLAUDE.md 총 글자 수 4,000자 이하 + 200줄 이하 (공식 권장 상한)
-- [ ] CLAUDE.md에 `{{` 또는 `}}` 플레이스홀더 잔존 없음
-- [ ] CLAUDE.md에 `<!-- IF:` 태그 잔존 없음
-- [ ] CLAUDE.md 요청 로깅 포맷에 `근본원인`/`일반화 후보` 필드 존재 (회고·규칙 승격의 근거가 됨)
-- [ ] knowledge/INDEX.md에 `{{` 잔존 없음
-- [ ] `.gitignore`에 `.secrets/`·`.env.local`·`.cache/`·`_workspace/` 포함
-- [ ] CLAUDE.md 톤앤매너에 `문체: 해요체` 또는 `문체: 합쇼체`가 그대로 있음 (훅 검사 9가 grep으로 읽는 문자열)
+**공통 (모든 프로젝트)**
+- [ ] 문서: `CLAUDE.md` · `docs/`의 questions·insights·proposals·setup-checklist
+- [ ] 지식: `knowledge/`의 INDEX·rules·pitfalls·unknown-unknowns·design-system·packages + `mistakes/recent.md` + `mistakes/archive/`
+- [ ] 에이전트: `.claude/agents/` 6종 + GOVERNANCE.md
+- [ ] 훅·설정: `.claude/settings.json` + `.claude/hooks/` 4종(check-ui-rules·check-done·check-deploy-web-assets·check-starter-version)
+- [ ] 스킬: `/tmp/rcs/template/.claude/skills/` 아래 폴더가 전부 `.claude/skills/`에 있음 (개수 일치)
+- [ ] 출력 스타일: `.claude/output-styles/fluent-korean.md` + `LICENSE-fluent-korean.txt`
+- [ ] 버전: `.claude/starter-version`
+
+**React 프로젝트**
+- [ ] 토큰·테스트: `src/styles/tokens.css` + `src/styles/tokens.contrast.test.ts`
+- [ ] 단일 지점: `src/lib/`(env·query-client·i18n·motion·utils) + `src/app/paths.ts` + i18n 3종
+- [ ] UI: `components.json` + `src/components/ui/`에 button·alert-dialog·sonner·input + `README.md` + App에 `<Toaster />` 1개
+- [ ] 아이콘: `src/components/icons/`(icon·icon-style·index·README) + 기본 세트 13종
+- [ ] 웹 에셋: `scripts/check-web-assets.mjs` + package.json `prebuild`·`check:web-assets`
+- [ ] scripts: package.json에 `lint`·`typecheck`·`test`·`build`
+
+**Firebase 프로젝트**
+- [ ] `.env`에 `VITE_FIREBASE_*` 6종 + `firebase.json` + `firestore.rules`·`storage.rules`(B-7에서 전부 막힘으로 시작)
+- [ ] `src/lib/firebase.ts` + `src/lib/test-auth.ts` + `src/app/use-auth-state.ts`·`protected-route.tsx`
+
+### B. 실행 검증 (React 프로젝트)
+
+- [ ] `npx tsc -b --noEmit` 통과 — 루트·app tsconfig 모두 `paths`(baseUrl 없음)
+- [ ] `npm run lint` 통과
+- [ ] `npx vitest run src/styles` 통과 — 토큰 명도 대비 4.5:1 (브랜드색 치환 뒤)
+- [ ] `grep -rn "lucide-react" src` 0줄 — sonner 등 shadcn 컴포넌트의 아이콘까지 프로젝트 세트로 교체됨
+- [ ] `bash .claude/hooks/check-ui-rules.sh </dev/null; echo $?` → `0` (훅이 이 머신에서 실행됨)
+
+### C. 내용 검증
+
+- [ ] CLAUDE.md: 4,000자·200줄 이하 · `{{`·`}}`·`<!-- IF:` 잔존 없음 · 톤앤매너에 `문체: 해요체` 또는 `문체: 합쇼체` 그대로
+      (훅 검사 9가 이 문자열을 읽는다) · 요청 로깅 포맷에 `근본원인`·`일반화 후보` 필드
+- [ ] knowledge/INDEX.md: `{{` 잔존 없음
+- [ ] `.claude/starter-version` 내용 = `/tmp/rcs/VERSION` · settings.json에 `"outputStyle": "fluent-korean"`
+- [ ] tokens.css: `--background` #ffffff · `--background-subtle` #f9f9f9 · 브랜드 `--primary`가 바뀜 — 브랜드색이 "미정"이면
+      실패가 아니라 setup-checklist **D1**을 미완료로 남기고 통과
+- [ ] 아이콘 README § 스타일 가이드 표가 채워짐 (컨셉과의 연결 포함)
+- [ ] `.gitignore`에 `.secrets/`·`.env.local`·`.cache/`·`_workspace/`
 
 ### 검증 실패 시
 - 실패 항목 모두 나열
@@ -710,9 +746,9 @@ bootstrap의 'React 베이스 코드 설치' 블록을 다시 실행하세요"�
 Sentry/AI/Figma/디자인/스케줄/MCP)를 해당 체크박스에 반영한다 — 연동 안 된 항목은 체크하지 말고
 대괄호 안에 상태를 그대로 남겨둔다(추측으로 체크하지 말 것).
 
-그다음 **"⚡ Day 0" 섹션의 미완료 항목을 하나씩 사용자에게 브리핑**한다 — 항목마다 (a) 왜 지금 해야
+그다음 **"⚡ Day 0" 표가 가리키는 ID 중 미완료인 것을 하나씩 사용자에게 브리핑**한다 — 항목마다 (a) 왜 지금 해야
 하는지 한 줄, (b) 구체적으로 어디서 어떻게 하는지(콘솔 경로·명령어), (c) 사용자가 "완료"라고 하면
-체크 표시. "나중에"를 선택한 항목은 남겨두면 된다 — 이 파일이 그 자체로 남은 할 일 목록이 된다.
+그 ID가 있는 섹션에서 `[x]`로 체크. 이 프로젝트에 필요 없는 항목은 `[-]`(해당없음)로 표시한다. "나중에"를 선택한 항목은 남겨두면 된다 — 이 파일이 그 자체로 남은 할 일 목록이 된다.
 
 아래 형식으로 사용자에게 출력:
 
@@ -724,19 +760,22 @@ CLAUDE.md                          (XXX자)
 docs/
   questions.md                     (요청 로그)
   insights.md                      (월간 분석 결과)
-  setup-checklist.md               (CLI·MCP·API 연동 현황 체크리스트)
+  proposals.md                     (규칙 승격 제안)
+  setup-checklist.md               (연동 현황·남은 할 일 — Day 0 표부터)
 knowledge/
   INDEX.md                         (상황별 라우터)
   rules.md                         (승격된 규칙 + React 프로덕션 초기 규칙)
   pitfalls.md                      (플랫폼 함정)
   unknown-unknowns.md              (겪기 전에 미리 아는 함정 58선)
   design-system.md                 (토큰 매핑표)
+  packages.md                      (리치포 맵 — 기능별 표준 패키지·shadcn 컴포넌트)
   mistakes/recent.md + archive/
 .claude/agents/                    (개발팀 Loop 6종 + GOVERNANCE)
-.claude/settings.json              (권한 허용목록 + 훅 2종 등록 + fluent-korean output-style 기본값)
+.claude/settings.json              (권한 허용목록 + 훅 4종 등록 + fluent-korean output-style 기본값)
 .claude/hooks/check-ui-rules.sh    (하드코딩 색·빈 콜백·경계 위반·AI 티 카피 결정론적 차단)
 .claude/hooks/check-starter-version.sh (세션 시작 시 스타터킷 새 버전 🆕 알림)
 .claude/hooks/check-deploy-web-assets.sh (호스팅 배포 직전 파비콘·앱 아이콘·OG 검사 — 누락 시 배포 차단)
+.claude/hooks/check-done.sh       (끝내기 직전 typecheck·lint·test 자동 실행 — 실패하면 되돌려 보냄)
 .claude/output-styles/fluent-korean.md (에이전트 한국어 문장 품질 — 새 세션부터 적용)
 .claude/starter-version            (설치된 스타터킷 버전)
 .claude/skills/
@@ -745,12 +784,15 @@ knowledge/
   setup-perf-monitor/              (Ops Loop Pull — 웹바이탈·번들 예산, 첫 배포 후)
   setup-firebase-mcp/              (Firebase 라이브 조회 — 준비되면 실행)
   generate-web-assets/             (로고 준비되면 파비콘·OG 생성)
+  frontend-design/                 (랜딩·소개 페이지의 시각 방향 — 브리프 승인 후 구현, Apache-2.0 원본의 한국어 수정본)
   update-starter/                  (새 버전 반영 + 변경 내역 링크 — 🆕 알림 시 실행)
 src/
-  styles/tokens.css                (디자인 토큰 단일 출처)
+  styles/tokens.css                (디자인 토큰 단일 출처 — 배경 흰색 · 회색 #f9f9f9)
+  styles/tokens.contrast.test.ts   (배경/글자 명도 대비 4.5:1 검사)
   lib/                             (firebase·env·query-client·sentry·i18n 단일 지점)
-  app/paths.ts + protected-route.tsx
+  app/paths.ts (+ Firebase 시 protected-route.tsx·use-auth-state.ts)
   components/ui/README.md          (공용 컴포넌트 카탈로그)
+  components/icons/                (프로젝트 아이콘 세트 — 컨셉에 맞춘 스타일 가이드 + 기본 13종, 기본 아이콘 팩 금지)
 
 📋 docs/setup-checklist.md에 Step 0.5 연동 결과를 체크박스로 반영했습니다.
 

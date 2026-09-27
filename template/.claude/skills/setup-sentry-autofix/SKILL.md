@@ -9,6 +9,10 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 
 # Sentry AutoFix 설치 (Ops Loop 모듈)
 
+> **키트 원본 파일이 필요하다.** 아래 `templates/…` 경로는 키트 저장소 기준이다 — 설치 뒤에는 프로젝트에 없으므로 먼저
+> `[ -d /tmp/rcs ] || git clone --depth 1 https://github.com/FineHourTeam/fine-harness-react-kit.git /tmp/rcs`로 받고
+> `/tmp/rcs/templates/…`에서 복사한다. 끝나면 `rm -rf /tmp/rcs`.
+
 > 웹은 Firebase Crashlytics를 지원하지 않는다 — 웹 에러 모니터링 표준은 Sentry이고, 이 모듈은
 > Sentry를 감지 소스로 쓴다.
 >

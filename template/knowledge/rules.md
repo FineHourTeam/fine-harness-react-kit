@@ -40,7 +40,7 @@
 1. **이미 커버되는가? (STOP 우선)**
    - shadcn 카탈로그(packages.md)에 있는가? → `npx shadcn@latest add <이름>`. 새 패키지 금지.
    - 스택 확정 표(packages.md)로 해결되는가? → 그걸 쓴다 (서버상태=Query·클라=Zustand·폼=RHF/zod·
-     애니=motion·아이콘=lucide·날짜=date-fns·차트=recharts·포맷=Intl). 대체 라이브러리 추가 금지.
+     애니=motion·아이콘=프로젝트 SVG 세트(@/components/icons)·날짜=date-fns·차트=recharts·포맷=Intl). 대체 라이브러리 추가 금지.
    - 10~30줄 유틸이면 직접 작성 + 유닛테스트.
 2. **안정성 검증** (전 항목): 주간 다운로드 상위권 · 최근 6개월 릴리스 · bundlephobia 크기 · TS-native ·
    ESM/tree-shakeable · React 19 peer 지원 · MIT/Apache · transitive deps 최소.
@@ -74,7 +74,7 @@
 
 **예외·에스컬레이션**: 사용자가 **명시적으로** "일단 목업만"·"스켈레톤만" 등 부분 구현을 지시하면
 그 범위까지만 하되, 미구현 지점을 완료 보고에 반드시 명시한다. 스펙이 특정 상태(에러·엣지)를
-안 다뤄 판단이 안 서면 임의로 스텁하지 말고 **에스컬레이션**(기존 "UI 명령 모호" 원칙과 동일).
+안 다루면 스텁하지 말고 **합리적 기본 처리**(한국어 에러 메시지 + 재시도, 빈 상태 안내)로 구현한 뒤 완료 보고에 가정으로 적는다.
 결정론 백스톱: 빈 콜백은 훅이, "렌더는 되나 미연결"(Potemkin)은 e2e 스모크가 잡는다.
 
 ---
@@ -109,13 +109,13 @@
 | src/features/[기능]/ | 다른 기능에서 직접 import 금지 (index.ts 공개 API만) |
 | src/features/[기능]/api/ | Firebase·AI 호출은 여기서만 |
 | src/features/[기능]/hooks/ | TanStack Query 훅·로컬 훅. Firebase SDK 직접 호출 금지 |
-| src/components/ui/ | 공용 컴포넌트 (shadcn/ui 패턴). README.md 먼저 확인. `npx shadcn@latest add`는 승인 없이 허용, 손으로 만든 컴포넌트 추가·기존 파일 수정은 에스컬레이션 |
+| src/components/ui/ | 공용 컴포넌트 (shadcn/ui 패턴). README.md 먼저 확인. `npx shadcn@latest add`·아이콘 import 교체·새 variant 추가·README 등록은 승인 없이. 손으로 만든 새 컴포넌트·기존 variant 모양 변경만 에스컬레이션 |
 | src/styles/ | 디자인 토큰 (tokens.css). 사용자가 요청한 색·값은 용도 토큰 추가·값 조정으로 허용(라이트/다크 쌍), 위계·스케일·폰트 체계 변경은 에스컬레이션 |
-| src/lib/ | firebase.ts·queryClient.ts·utils 등 공용 인프라. 사람 승인 필요 영역 |
+| src/lib/ | firebase.ts·query-client.ts·env.ts·utils 등 공용 인프라. 새 공용 유틸 추가는 진행(보고), 기존 단일 지점의 설정 변경(Firebase·환경변수)은 에스컬레이션 |
 | src/app/ | 라우터·프로바이더·전역 에러 바운더리 |
 | src/stores/ | 전역 Zustand 스토어 (feature 전용은 feature 안에) |
-| docs/ | questions.md·insights.md만 에이전트 append |
-| knowledge/ | mistakes/recent.md만 에이전트 append |
+| docs/ | 에이전트: questions·insights·proposals에 append, DESIGN.md에 승인된 브리프 기록. 그 밖은 사람 |
+| knowledge/ | 에이전트: mistakes/(recent append·archive 압축)만. 그 밖은 사람 |
 | functions/ | Cloud Functions (모노레포) — 배포는 firebase deploy, 앱 규칙과 별개 |
 | firestore.rules / storage.rules | 클라이언트 연산 변경과 **같은 커밋**으로만 수정 |
 
@@ -135,7 +135,7 @@
 - mutation 후 관련 쿼리 invalidateQueries 필수. 낙관적 업데이트는 onError 롤백까지 한 세트.
 - Firestore 실시간(onSnapshot)이 꼭 필요한 화면만 구독 훅 사용 — 구독 결과를
   `queryClient.setQueryData`로 주입하거나 전용 훅으로 분리, 나머지는 getDocs+useQuery.
-- staleTime 기본 30초 이상 권장 (기본 0은 과다 리페치) — 값 변경은 lib/queryClient.ts 한 곳에서.
+- staleTime 기본 30초 이상 권장 (기본 0은 과다 리페치) — 값 변경은 lib/query-client.ts 한 곳에서.
 
 ---
 
@@ -175,25 +175,31 @@
 | 종류 | 사용법 | 참조 파일 |
 |------|--------|----------|
 | 색상 | Tailwind 시맨틱 클래스(bg-background·text-foreground·bg-primary...) — CSS 변수 기반 | src/styles/tokens.css |
-| 타이포 | text-sm~text-2xl 스케일 + 시맨틱 컴포넌트(Heading·Text) | src/styles/tokens.css |
+| 타이포 | text-xs~text-2xl 스케일 (크기 임의값 금지) | Tailwind 기본 스케일 |
 | 폰트 | --font-sans = Pretendard Variable (교체는 이 변수 하나) | src/styles/tokens.css |
 | 간격 | Tailwind 스케일(p-1~p-8 = 4px 단위)만 — 임의값 p-[13px] 금지 | tailwind 기본 스케일 |
 | 라운드 | rounded-{sm,md,lg,xl} — --radius 변수 기반 | src/styles/tokens.css |
-| 그림자 | shadow-{sm,md,lg} 토큰만 | src/styles/tokens.css |
+| 그림자 | shadow-{sm,md,lg} (Tailwind 기본) — 임의값 금지 | Tailwind 기본 스케일 |
 
 "전체 radius 변경"·"폰트 교체"·"브랜드 색 변경" 같은 요청 = tokens.css 한 곳만 수정 (화면 코드 불변).
 
 ### 색상 위계 (스키마 고정 — shadcn/ui 관례)
-background/foreground · card · popover · primary · secondary · muted · accent ·
+background/foreground · background-subtle · card · popover · primary · secondary · muted · accent ·
 destructive · success · warning · border · input · ring.
-새 색이 필요하면 이 위계 중 하나로 편입해 `tokens.css`에 등록 — 화면에서 `#hex`,
+
+**배경색**: 페이지·섹션·영역 배경은 **흰색(`bg-background`, #ffffff)이 기본**. 회색 배경이 필요하면 **`bg-background-subtle`
+(#f9f9f9) 하나만** 쓴다 — `bg-muted`·`bg-secondary`·`bg-accent`는 배지·호버·스켈레톤 같은 컴포넌트 상태용이라 영역 배경으로 쓰지
+않는다. 회색 영역 위의 카드·입력창은 흰색(`bg-card`·`bg-background`)으로 띄운다.
+  - ❌ `<main className="bg-muted">` · `<section className="bg-secondary">` · `bg-gray-50`(훅 차단)
+  - ✅ `<main className="bg-background">` · `<section className="bg-background-subtle">`
+새 색이 필요하면 맞는 위계가 있으면 그 값을 조정하고, 없으면 용도 이름 토큰(`--cta`+`--cta-foreground`)을 `tokens.css`에 추가한다 — 화면에서 `#hex`,
 `text-[#...]`, `bg-[oklch(...)]` arbitrary value 직접 사용 금지 (**훅이 차단**).
 모든 색은 `:root`(라이트)와 `.dark`(다크) **쌍으로 정의 필수**.
 
 ### 팔레트 정량 상한 (v0 검증 규칙)
 - **팔레트는 총 3~5색(hue 기준)** — 브랜드 1 + 뉴트럴 1~2(배경·보더·뮤티드 계열) + 액센트 0~2.
   시맨틱 상태색 3종(destructive/success/warning)은 카운트 예외(단, 상태 표시 외 용도 사용 금지).
-  5색 초과는 사람 승인 없이 금지.
+  에이전트가 스스로 5색을 넘기지 않는다 (사용자가 요청한 색 때문에 넘으면 아래처럼 진행하고 보고).
 - **사용자가 특정 요소의 색을 명시 요청하면 멈추지 않는다** — 맞는 시맨틱 토큰이 있으면 그걸 쓰고, 없으면 tokens.css에
   용도 이름 토큰(예: `--cta` + `--cta-foreground`, 라이트/다크 쌍 + `@theme` 등록)을 추가하거나 `--primary` 값을 조정해
   진행한다. 상태색(destructive 등)을 상태 표시 외 용도로 빌려 쓰지 않는다. 5색 상한을 넘게 되면 완료 보고에 적는다.
@@ -209,12 +215,12 @@ destructive · success · warning · border · input · ring.
   스탑 2~3개, 반대 색온도 혼합(핑크→그린 등) 금지.
 - **채움용 장식 요소 금지** — 블러 원, 그라디언트 blob, 추상 도형으로 빈 공간을 채우지 않는다.
   빈 공간은 여백으로 두는 것이 정상.
-- **이모지를 아이콘 대용으로 사용 금지** — 아이콘은 lucide-react만 (§ 아이콘 규칙).
-- **복잡한 일러스트를 SVG path로 손제작 금지** — 필요하면 에셋 요청 에스컬레이션.
+- **이모지를 아이콘 대용으로 사용 금지** — 아이콘은 프로젝트 SVG 세트만 (§ 아이콘 규칙).
+- **복잡한 일러스트를 SVG path로 손제작 금지** — 자리는 여백으로 두고 완료 보고에 "일러스트 에셋 필요"를 적는다.
   (§ 아이콘 규칙의 24×24 브랜드 아이콘 제작과는 별개 — 아이콘은 허용, 일러스트가 금지 대상.)
 
 ### 타이포 위계 (필수)
-- 텍스트 크기는 Tailwind 스케일(text-xs~)만 — `text-[11px]` 등 임의값 금지(**훅 차단**).
+- 텍스트 크기는 Tailwind 스케일(text-xs~)만 — `text-[13px]`·`text-[0.8rem]` 등 임의값 금지(**훅 차단**).
 - **최소 폰트 크기 12px** — text-xs(12px) 미만 금지. inline style fontSize도 동일(**훅 차단**).
 - font-family 직접 지정 금지 — tokens.css의 --font-sans가 소유.
 
@@ -230,24 +236,31 @@ destructive · success · warning · border · input · ring.
   차단하지만, JS 애니메이션은 이 훅으로 별도 처리). 감속 사용자에겐 opacity만 또는 무애니메이션.
 
 ### 다국어 (한국어 기본, 확장 대비)
-- react-i18next + typed resources(`i18next.d.ts`)가 설치 시부터 세팅됨 — 공용 문구(확인/취소/저장
+- react-i18next + typed resources(`i18next.d.ts`)가 설치 시부터 세팅됨 — 공용 문구(닫기/저장/삭제
   등)는 `src/locales/ko/common.json`에 추가해 재사용.
 - 화면 전용 문구는 당분간 한국어 리터럴 허용(개발 속도) — 다국어 출시가 확정되면 리소스로 이관.
 
 ### 컴포넌트 재사용 (shadcn/ui 패턴)
 - 공용 UI는 `src/components/ui/` (Button·Input·Dialog·Card·Toast 등 Radix 기반) — 새 위젯을 만들기
   전 README.md 카탈로그 확인, 이미 있으면 재사용.
-- 비슷한 형태가 3번째 등장하면 ui/ 승격 에스컬레이션 (매번 재생성 = 화면 간 불일치 + 토큰 낭비).
+- 비슷한 형태가 3번째 등장하면 완료 보고에 "ui/ 승격 후보"로 적는다 (매번 재생성 = 화면 간 불일치 + 토큰 낭비).
 - 버튼·입력창의 시각 변형은 컴포넌트의 variant prop(cva)이 소유 — 화면에서 className으로 색·크기
-  재정의 금지. 새 변형이 필요하면 variant 추가 에스컬레이션.
+  재정의 금지. 새 변형이 필요하면 variant를 추가하고 보고한다 (기존 variant 모양을 바꾸는 것만 에스컬레이션).
 
 ### 아이콘 규칙 (스타일 통일)
-- **아이콘 세트는 lucide-react 하나로 고정** — 여러 아이콘 팩 혼용 금지 (스타일 뒤섞임 = 버그).
-- 장식용 아이콘 금지 — (1) 보편 기호가 있어 텍스트보다 빠르게 지각될 때, (2) 공간 제약, (3) 목록
-  유형 반복 구분에만 사용.
-- 브랜드·콘텐츠 전용 아이콘은 `src/assets/icons/` SVG 세트로 통일 제작 (viewBox 24×24, 스트로크
-  1.5, currentColor). 만들기 전 기존 세트 중복 확인.
-- 아이콘 버튼은 aria-label 필수 (텍스트 없는 버튼은 스크린리더에 안 읽힘).
+- **기본 아이콘 팩 금지 — 아이콘은 제품 컨셉에 맞게 새로 그린다.** lucide-react·react-icons·heroicons 등은 쓰지 않는다
+  (**훅·lint·끝내기 전 검사가 차단**). 다른 서비스와 똑같은 아이콘이 "AI가 만든 기본 화면" 인상을 만든다.
+- 모든 아이콘은 `src/components/icons/`의 프로젝트 SVG 세트 — `createIcon`으로 만들고 `@/components/icons`에서 가져온다.
+  크기·선 두께·끝 모양은 `icon-style.ts` 하나가 소유 (화면에서 strokeWidth 등을 넘기지 않는다). 화면 코드에 인라인 `<svg>` 금지(훅 차단).
+- 필요한 아이콘이 없으면 **멈추지 말고 새로 그린다** — `src/components/icons/README.md`의 스타일 가이드·그리드 규칙대로, 같은 뜻의
+  아이콘이 이미 있는지 목록부터 확인. 다른 아이콘 팩의 path 복사 금지 (라이선스·컨셉 불일치).
+  - ❌ `import { Trash2 } from "lucide-react"` · `<svg viewBox="0 0 24 24">…</svg>`를 화면 컴포넌트에 직접
+  - ✅ `src/components/icons/delete-icon.tsx`에 `export const DeleteIcon = createIcon("DeleteIcon", <>…</>)` → `import { DeleteIcon } from "@/components/icons"`
+- `npx shadcn@latest add`로 들어온 컴포넌트가 lucide를 import하면(sonner·dialog·select 등) 같은 작업 안에서 프로젝트 아이콘으로 바꾼다
+  (없으면 새로 그림) — shadcn CLI는 편집 훅을 거치지 않으므로 끝내기 전 검사가 잡는다. `lucide-react` 패키지는 shadcn CLI가
+  다시 설치할 수 있어 남아 있어도 되지만, import는 0이어야 한다.
+- 장식용 아이콘 금지 — (1) 보편 기호가 있어 텍스트보다 빠르게 지각될 때, (2) 공간 제약, (3) 목록 유형 반복 구분에만 사용.
+- 아이콘만 있는 버튼은 버튼에 aria-label 필수. 아이콘 혼자 뜻을 전하면 `label` prop (스크린리더용), 옆에 글자가 있으면 생략(장식).
 
 ### 모달·다이얼로그·토스트 (공용 컴포넌트 강제)
 - **다이얼로그**: window.alert/confirm/prompt 직접 호출 금지 — `src/components/ui/`의 공용
@@ -295,7 +308,7 @@ src/features/[기능]/
 
 ### 금지
 - `any` 남용 (`unknown` + 좁히기 사용), `@ts-ignore`(불가피하면 `@ts-expect-error` + 사유 주석)
-- console.log 잔존 (디버깅 후 제거, 로깅은 lib/logger 경유)
+- console.log 잔존 (디버깅 후 제거 — 운영 에러는 Sentry(`src/lib/sentry.ts`)로)
 - 하드코딩 색상·크기·radius·shadow (임의 Tailwind arbitrary value 포함)
 - Firebase·AI를 컴포넌트·훅에서 직접 호출
 - features 간 직접 import
@@ -388,7 +401,7 @@ im-not-ai가 맡고, 여기는 두 도구가 다루지 않는 **서비스 특화
 - **인사·마무리 상투구 금지** — "안녕하세요, 고객님. … 추가 질문이 있으시면 언제든지" 틀 대신 본론부터.
 
 ### 300자+ 산문 (랜딩·온보딩·이메일·공지·약관 안내)
-- 작성 후 `/humanize-scan`(im-not-ai, 사용자 전역 설치 — setup-checklist § 한국어 품질 도구)으로 AI 티 점검. 손볼 게
+- 작성 후 `/humanize-scan`(im-not-ai, 사용자 전역 설치 — setup-checklist T7)으로 AI 티 점검. 손볼 게
   많다고 나오면 `/humanize-korean`. 실측 판별력이 높은 신호 6개: "A가 아니라 B" 대구 반복 · 100자 넘는 문장 부재 ·
   연결어미 뒤 쉼표("-고,"·"-며,") · 문단 끝 당위("~해야 한다") 반복 · 같은 종결어미 4문장+ 연속 · "~적 N" 추상 체인.
   산문 작업 폴더 `_workspace/`는 .gitignore에 있음.
@@ -495,11 +508,5 @@ permission-denied를 기다리면 늦다. 대조 방법·함정(affectedKeys, li
 - base: main
 
 ### 에스컬레이션
-- 요청 범위를 넘는 신규 기능 (사용자가 요청한 기능은 스펙이 있는 것으로 본다)
-- packages.md 리치포 맵 밖 새 런타임 패키지 (shadcn add와 그 동반 패키지는 제외)
-- Firebase 설정·보안규칙 구조 변경
-- API 키·시크릿
-- 손으로 만든 ui 컴포넌트 · 토큰 위계·스케일 변경 · src/lib/ 신규 모듈
-- 아키텍처 원칙 위반해야 풀리는 문제
-- UI 명령 모호
-- 톤앤매너 충돌 기획
+멈추는 곳의 목록은 **CLAUDE.md § 에스컬레이션 하나뿐**이다. 이 문서의 "에스컬레이션"은 모두 그 목록의 항목을 가리킨다.
+목록에 없는 애매함은 가장 가까운 규칙 안의 방법으로 끝내고 완료 보고에 가정을 적는다.

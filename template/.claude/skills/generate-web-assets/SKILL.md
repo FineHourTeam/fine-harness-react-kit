@@ -3,7 +3,6 @@ name: generate-web-assets
 description: 로고 원본으로 파비콘 세트·PWA 아이콘·OG 이미지 등 웹 서비스에 필요한 전 에셋을 생성하고 index.html 메타에 연결한다.
 argument-hint: (인자 없음)
 user-invocable: true
-disable-model-invocation: true
 allowed-tools: Bash, Read, Write, Edit, Glob
 ---
 
@@ -97,7 +96,7 @@ npx playwright screenshot --viewport-size=1200,630 web-assets/og-template/og.htm
 <meta name="twitter:card" content="summary_large_image">
 ```
 og:image는 **절대 URL**이어야 카카오톡·슬랙 미리보기가 동작한다 — 프로덕션 도메인 확정 전이면
-`docs/setup-checklist.md`에 "도메인 확정 후 og:image 절대경로 갱신" 항목을 남긴다.
+`docs/setup-checklist.md`의 **W5**(og:image 절대 URL)를 미완료로 둔다.
 
 ## Step 5: 검증 + 완료 보고
 
@@ -106,4 +105,4 @@ og:image는 **절대 URL**이어야 카카오톡·슬랙 미리보기가 동작�
 - 이미 배포된 사이트라면 재배포 후 `node scripts/check-web-assets.mjs --url https://<도메인>`으로 Googlebot 기준 확인,
   Search Console URL 검사에서 홈페이지 **색인 생성 요청** (Google 검색 결과 아이콘 반영까지 며칠~몇 주)
 - 생성 파일 목록 + 남은 수동 항목(카카오톡 미리보기 캐시는 https://developers.kakao.com/tool/debugger/sharing 에서 갱신) 보고
-- `docs/setup-checklist.md`의 "웹 에셋" 항목 체크 안내
+- `docs/setup-checklist.md` § 6 웹 에셋(W1~W3) 체크 안내

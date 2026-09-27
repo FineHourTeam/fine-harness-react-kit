@@ -27,16 +27,18 @@
      창의성은 브리프 단계에 몰고 코딩은 이행만). 승인된 브리프는 docs/DESIGN.md에 해당 화면 절로 기록.
 2. **knowledge/packages.md — 리치포 맵** (드롭다운·모달·토스트·차트·캐러셀 등은 shadcn add로, 손수 금지)
 3. knowledge/design-system.md — 토큰 단일 출처 (색·타이포·간격, 하드코딩 hex 금지·다크 필수)
-3. src/components/ui/README.md — 기존 컴포넌트 재사용 필수
-4. knowledge/rules.md § 디자인 — 토큰 매핑
-5. knowledge/rules.md § 톤앤매너 + § 한국어 카피 — UI 문구 톤·문체(해요/합쇼) 통일·AI 티 블랙리스트
+4. src/components/ui/README.md — 기존 컴포넌트 재사용 필수
+5. knowledge/rules.md § 디자인 — 토큰 매핑
+6. knowledge/rules.md § 톤앤매너 + § 한국어 카피 — UI 문구 톤·문체(해요/합쇼) 통일·AI 티 블랙리스트
 
 ### 버그/오류 수정
 1. knowledge/mistakes/recent.md — 동일 버그 이력
 2. knowledge/pitfalls.md — 플랫폼 고질병 여부
 3. knowledge/unknown-unknowns.md — 증상 관련 섹션 (프로덕션 빌드에서만 터지면 #47~58 먼저)
 4. knowledge/rules.md 관련 섹션
-5. 수정 후 npm run lint + typecheck + test
+5. **재현 테스트 먼저**: 버그를 재현해 실패하는 테스트를 쓰고, 그 테스트가 통과하도록 고친다 (재현 못 하면 그 사실과
+   가설을 보고) — 테스트가 성공 기준이 되어 "고쳤다"를 확인할 수 있다
+6. 수정 후 npm run lint + typecheck + test
 
 **에러 수정 루프 이탈 프로토콜 (doom loop 차단)**: 같은 에러에 대한 수정 시도가 **2회 실패**하면
 즉시 중단하고 —
@@ -67,7 +69,8 @@
 2. Firestore/Storage 연산을 추가·변경했다면 보안규칙 정적 대조 (rules.md § Firebase — 보안규칙 대조)
 3. 사용자향 한국어를 썼다면 rules.md § 한국어 카피 체크리스트 대조. 300자+ 산문(랜딩·온보딩·이메일·공지)은
    `/humanize-scan`(설치돼 있으면)으로 AI 티 점검 — 손볼 게 많다고 나오면 `/humanize-korean`
-4. 검증 명령어 4개 실행 (lint / typecheck / test / build)
+4. 검증 명령어 4개 실행 (lint / typecheck / test / build) — 끝낼 때 Stop 훅이 typecheck·lint·test를 다시 돌려 실패하면
+   되돌려 보낸다. build는 직접 돌린다
    — 배포까지 하는 작업이면 `npm run check:web-assets`도 통과해야 한다 (파비콘·OG 누락 시 배포 훅이 막는다)
 5. 실수 있었으면 @mistake-logger 호출
 6. 새 플랫폼 함정 발견 시 pitfalls.md 추가 제안

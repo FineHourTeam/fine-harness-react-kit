@@ -3,9 +3,9 @@
  * "브랜드 색 변경"·"radius 변경"·"폰트 교체" = 이 파일 한 곳만 수정.
  *
  * 색상 위계 (shadcn/ui 관례, OKLCH):
- *   background/foreground · card · popover · primary · secondary · muted · accent ·
- *   destructive · success · warning · border · input · ring
- * 새 색이 필요하면 이 위계 중 하나로 편입 — 화면에서 hex·arbitrary value 금지 (훅 차단).
+ *   background/foreground · background-subtle · card · popover · primary · secondary · muted · accent ·
+ *   destructive · success · warning · border · input · ring (+ chart-1~5 · sidebar-*: shadcn chart·sidebar용)
+ * 새 색: 맞는 위계가 있으면 값 조정, 없으면 용도 토큰(--cta + --cta-foreground) 추가 — 화면에서 hex·arbitrary value 금지 (훅 차단).
  * 모든 색은 :root(라이트)와 .dark(다크) 쌍으로 정의 필수.
  */
 
@@ -22,8 +22,11 @@
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
 
-  /* ── 표면 ── */
-  --background: oklch(1 0 0);
+  /* ── 표면 ──
+   * 페이지·섹션 배경은 흰색이 기본. 회색 배경이 필요하면 background-subtle(#f9f9f9)만 쓴다 —
+   * muted·secondary·accent는 배지·호버·스켈레톤 같은 컴포넌트용이지 영역 배경이 아니다 (rules.md § 색상 위계). */
+  --background: #ffffff;
+  --background-subtle: #f9f9f9;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -34,14 +37,14 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.51 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
 
   /* ── 시맨틱 ── */
   --destructive: oklch(0.577 0.245 27.3);
   --destructive-foreground: oklch(0.985 0 0);
-  --success: oklch(0.627 0.17 149);
+  --success: oklch(0.52 0.15 149);
   --success-foreground: oklch(0.985 0 0);
   --warning: oklch(0.795 0.16 86);
   --warning-foreground: oklch(0.205 0 0);
@@ -50,6 +53,22 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+
+  /* ── 차트·사이드바 (shadcn chart·sidebar가 참조 — 레지스트리가 채워 주지 않는다) ──
+   * 차트 5색은 데이터 구분용. 브랜드 팔레트 3~5색 상한과 별개지만 브랜드색과 어울리게 조정한다. */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: var(--background-subtle);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 
   /* ── 형태 ── */
   --radius: 0.625rem;
@@ -60,6 +79,7 @@
   --primary-foreground: oklch(0.205 0 0);
 
   --background: oklch(0.145 0 0);
+  --background-subtle: oklch(0.18 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -74,7 +94,7 @@
   --accent-foreground: oklch(0.985 0 0);
 
   --destructive: oklch(0.704 0.191 22.2);
-  --destructive-foreground: oklch(0.985 0 0);
+  --destructive-foreground: oklch(0.145 0 0);
   --success: oklch(0.696 0.17 149);
   --success-foreground: oklch(0.145 0 0);
   --warning: oklch(0.828 0.155 86);
@@ -83,10 +103,17 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-subtle: var(--background-subtle);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -109,6 +136,19 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   /* 폰트 — 교체는 이 변수 하나. Pretendard Variable은 index.html에서 프리로드 */
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,

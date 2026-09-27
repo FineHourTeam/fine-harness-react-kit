@@ -17,7 +17,7 @@
 | 폼 상태·검증 | react-hook-form + zod | Formik·yup·직접 useState 폼 |
 | 라우팅 | React Router v7 | (TanStack Router는 에스컬레이션) |
 | 애니메이션 | **`motion`** (`import { motion } from "motion/react"`) | react-spring·GSAP·자체 |
-| 아이콘 | lucide-react | 다른 아이콘 팩 혼용 |
+| 아이콘 | **프로젝트 SVG 세트** (`@/components/icons`, 컨셉에 맞게 새로 그림) | lucide-react·react-icons 등 모든 기본 아이콘 팩 |
 | className | `cn()` = clsx + tailwind-merge | 문자열 수동 조합 |
 | 날짜 | date-fns (+ @date-fns/tz) | moment(EOL)·luxon·dayjs 혼용 |
 | 차트 | recharts (shadcn Chart) | 즉흥 선택 |
@@ -35,7 +35,7 @@
 | 캐러셀 | `shadcn add carousel` (embla-carousel-react) |
 | 차트 | `shadcn add chart` (recharts) |
 | 데이터 테이블(정렬·필터·페이지) | `shadcn add table` + TanStack Table |
-| 날짜 선택 | `shadcn add calendar` / `date-picker` (react-day-picker + date-fns) |
+| 날짜 선택 | `shadcn add calendar popover` → 날짜 선택기는 두 컴포넌트를 조합 (react-day-picker + date-fns — date-picker는 레지스트리 항목이 아니라 조합 예제) |
 | Drawer(모바일 시트) | `shadcn add drawer` (vaul) |
 | OTP 입력(6칸) | `shadcn add input-otp` (input-otp — 붙여넣기·자동이동) |
 | 모달·시트·팝오버·툴팁·드롭다운 | `shadcn add dialog/sheet/popover/tooltip/dropdown-menu` (Radix — focus trap·scroll lock·collision 무료) |

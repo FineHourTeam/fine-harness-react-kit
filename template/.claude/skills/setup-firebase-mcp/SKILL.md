@@ -14,7 +14,7 @@ allowed-tools: Bash, Read, Write, Edit
 > 핵심 가치다. 시크릿·PAT 발급이 필요 없어 가볍다 — `.mcp.json` 파일 하나면 끝난다.
 >
 > 참고: 신규 설치라면 `bootstrap.md` Step 0.5-I가 같은 등록을 이미 수행했을 수 있다
-> (`docs/setup-checklist.md`의 MCP 항목 확인). 이 스킬은 설치 때 건너뛰었거나, 등록 제품 범위를
+> (`docs/setup-checklist.md` **M1** 확인). 이 스킬은 설치 때 건너뛰었거나, 등록 제품 범위를
 > 나중에 바꾸고 싶을 때 쓴다.
 
 ---

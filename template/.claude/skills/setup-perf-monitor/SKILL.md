@@ -9,6 +9,10 @@ allowed-tools: Bash, Read, Write, Edit
 
 # 성능 회귀 모니터링 설치 (Pull형 Ops Loop 모듈)
 
+> **키트 원본 파일이 필요하다.** 아래 `templates/…` 경로는 키트 저장소 기준이다 — 설치 뒤에는 프로젝트에 없으므로 먼저
+> `[ -d /tmp/rcs ] || git clone --depth 1 https://github.com/FineHourTeam/fine-harness-react-kit.git /tmp/rcs`로 받고
+> `/tmp/rcs/templates/…`에서 복사한다. 끝나면 `rm -rf /tmp/rcs`.
+
 > 앱 스토어가 없는 웹에서는 "별점 하락" 대신 **웹바이탈 회귀**가 사용자 불만의 선행 지표다.
 > 이 모듈은 주 1회 프로덕션 URL을 Lighthouse(모바일 프로파일, 3회 중앙값)로 측정해
 > 성능 예산 위반 시 이슈를 생성/갱신한다 — 보고만 하고 코드는 건드리지 않는다.
@@ -43,8 +47,8 @@ allowed-tools: Bash, Read, Write, Edit
 gh workflow run perf-monitor.yml
 gh run watch
 ```
-첫 실행 결과(각 지표 값)를 `docs/setup-checklist.md` 웹 에셋/성능 항목 근처에 "기준선
-YYYY-MM-DD: LCP xxx / CLS x.xx / TBT xxx"로 기록 — 이후 회귀 판단의 비교점.
+첫 실행 결과(각 지표 값)를 `docs/setup-checklist.md` **O3**의 "기준선
+YYYY-MM-DD: LCP xxx / CLS x.xx / TBT xxx" 자리에 기록 — 이후 회귀 판단의 비교점.
 첫 실행부터 예산 위반이면: 예산을 낮추지 말고 위반 지표를 백로그 이슈로 남긴다 (예산은 목표치).
 
 ## Step 4: 완료 보고
@@ -60,4 +64,4 @@ YYYY-MM-DD: LCP xxx / CLS x.xx / TBT xxx"로 기록 — 이후 회귀 판단의 
 실사용 INP는 Sentry Performance에서 별도 확인.
 ```
 
-`docs/setup-checklist.md`의 Ops Loop 항목 체크 안내.
+`docs/setup-checklist.md` **O3** 체크 안내.

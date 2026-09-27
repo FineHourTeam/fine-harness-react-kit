@@ -1,5 +1,77 @@
 # Changelog
 
+## v2.0.0 (2026-09-27)
+
+**파괴적 변경** — 기본 아이콘 팩(lucide 등) 금지와 끝내기 전 검사(Stop 훅) 도입. 기존 프로젝트는 "업그레이드 시 할 일"의
+아이콘 이전을 먼저 해야 작업 종료가 막히지 않는다.
+
+### 달라진 것
+- **끝내기 전 검증을 훅이 직접 돌린다.** 새 Stop 훅(`check-done.sh`)이 `src/`가 바뀐 작업을 끝내려는 순간 typecheck·lint·test를
+  실행하고, 실패하면 오류 요약과 함께 되돌려 보낸다. 문서에만 적힌 "완료 전 검증"은 에이전트가 자주 건너뛴다는 관찰(Böckeler,
+  martinfowler.com)에 따른 것. 질문·문서 작업과 이미 통과한 상태는 다시 돌리지 않고, 한 번 되돌린 뒤에는 통과시킨다(무한 반복 방지).
+  test는 `npm run test -- --run`으로 부른다 — test 스크립트가 없으면 건너뛴다.
+- **CLAUDE.md를 131줄 → 104줄로 줄였다.** package.json으로 알 수 있는 기술 스택 목록, 에이전트가 스스로 실행할 수 없는 `/compact`
+  지시, 모델이 원래 하는 "파일 직접 Read" 지시를 뺐다(ETH 연구: 개요·중복 설명은 성공률을 못 올리고 비용만 늘림).
+  "작업 규모별 절차·자기비판·검증 명령어·에러 수정 루프" 네 절은 § 작업 방식 하나로 합쳤다.
+- § 작업 방식에 새 원칙 (Karpathy 지침에서): 요청과 무관한 주변 코드·주석·서식을 손대지 않기(포매터는 바꾼 파일에만 —
+  `npx prettier --write <파일>` 권한 추가) · 한 번 쓰는 코드에 추상화·설정 옵션 금지 · 해석이 갈린 가정은 완료 보고에.
+  "모호하면 멈추고 물어라"는 넣지 않았다 — 과잉 에스컬레이션이 v1.9 이전 가장 큰 실패 원인이었다.
+- INDEX § 버그/오류: **재현 테스트를 먼저** 쓰고 그 테스트가 통과하도록 고친다.
+- **파괴적 변경 — 기본 아이콘 팩 금지.** 아이콘은 `src/components/icons/`의 프로젝트 SVG 세트만 쓴다 (`createIcon` + `icon-style.ts`가
+  크기·선 두께·끝 모양을 소유). lucide-react 등 기본 아이콘 팩 import는 편집 훅(검사 10)·ESLint `no-restricted-imports`·끝내기 전
+  검사(shadcn CLI가 쓴 파일까지)가 막고, 화면 코드의 인라인 `<svg>`도 막는다. 설치 때 제품 컨셉으로 아이콘 스타일을 정하고 기본
+  13종(토스트 상태 5 + 자주 쓰는 8)을 새로 그려 `sonner.tsx`의 lucide import를 교체한다. 기본 설치 목록에서 `lucide-react` 제거.
+- **배경색**: `--background`를 흰색(#ffffff)으로 고정하고 회색 배경 토큰 `--background-subtle`(#f9f9f9, `bg-background-subtle`)을
+  추가. 페이지·섹션 배경의 회색은 이것만 — `main`·`section` 등 영역 태그에 `bg-muted`·`bg-secondary`·`bg-accent`를 쓰면 훅이 막는다.
+- **명도 대비 수정 + 검사 테스트**: 기본 토큰 중 WCAG AA(4.5:1) 미달이던 쌍을 고쳤다 — 라이트 `--muted-foreground` 0.556→0.51
+  (회색 배경 위 4.49→통과), 라이트 `--success` 0.627→0.52(흰 글자 3.16→통과), 다크 `--destructive-foreground`를 어두운 글자로(2.77→통과).
+  `src/styles/tokens.contrast.test.ts`가 배경/글자 12쌍을 라이트·다크로 검사한다 — 브랜드색을 바꾸면 test(끝내기 전 검사 포함)에서 걸린다.
+- **`docs/setup-checklist.md` 개편 (중복·누락 정리)**: 모든 항목에 ID(T·Q·D·F·P·W·S·M·O·L)를 붙이고 항목마다 한 곳에만 둔다.
+  Day 0은 체크박스 대신 ID를 가리키는 표로 바꿨다(같은 일을 두 곳에서 체크하다 상태가 어긋나던 문제). 흩어져 있던 Sentry·Firebase MCP·
+  서비스 계정 키·Hosting을 한 섹션씩으로 모았고, 빠져 있던 **디자인 시스템(D1~D4)**·프로덕션 도메인(P4)을 추가했다. `[-]` = 해당없음.
+- bootstrap Step 4 설치 검증을 **A 파일 존재 → B 실행 검증 → C 내용 검증**으로 재구성 (파일 확인에 섞여 있던 tsc·lint 통과를 B로,
+  명도 대비·아이콘·배경 토큰 확인 추가). Step 5 완료 보고 목록에 빠져 있던 proposals.md·packages.md 추가.
+- **내부 모순 정리 (규칙끼리 부딪혀 에이전트가 멈추던 지점)**: 멈추는 곳은 CLAUDE.md § 에스컬레이션 목록 하나로 — rules.md·design-system.md에
+  흩어져 있던 에스컬레이션(스펙 공백·새 색·ui variant 추가·src/lib 유틸·일러스트·ui 승격)은 "진행하고 완료 보고에 적기"로. 편집 훅은
+  `src/components/ui/`의 shadcn 원본 코드를 색·간격·라운드·dangerouslySetInnerHTML 검사에서 뺀다(lucide 교체하려다 원본 코드에 막히던 문제).
+  AI 프롬프트 파일·JSX 주석은 카피 검사 제외. 문서에 "훅 차단"이라 적혔지만 통과하던 `fill="#…"`·인라인 `background` hex·`text-[13px]`·
+  "합니다/됩니다"를 실제로 막는다. 훅 적중을 `.git/claude-sensor-hits.log`에 남겨 `@rule-deprecator`가 근거로 쓴다.
+- 설치·운영 정합성: 에이전트가 쓰는 파일 목록을 실제와 일치(proposals·DESIGN.md·mistakes/archive), 실행 주기 통일(rule-promoter 주 1회 ·
+  compressor 200줄 초과 시 · analyzer 월 1회/50건, 스케줄은 매주 월요일), append 파일용 Edit 도구 추가, `/generate-web-assets`를 에이전트가
+  호출 가능하게, Ops Loop 스킬이 키트 원본을 받는 단계 추가, `firebase init firestore storage`(규칙은 전부 막힘으로 시작) 추가, 브랜드색 "미정"은
+  설치 검증 실패가 아니라 D1 미완료, chart·sidebar 토큰 추가, `shadcn add`·`check:web-assets` 권한 허용, 공용 문구에서 "확인/취소" 제거.
+- 요청 로그(`docs/questions.md`)는 코드를 바꾸는 요청만 적는다 — 질문에 답만 하는 요청은 생략.
+- 서브에이전트별 모델 고정: `@mistake-logger`는 haiku, 나머지 다섯은 sonnet (GOVERNANCE.md 모델 열). 사람이 Opus로 작업해도
+  주기 분석까지 Opus로 돌지 않는다.
+- `@rule-promoter`: 제안마다 **강제 수단**을 훅 → lint → 테스트 → 설치 → 산문 순서로 고르고, "막을 것·깨뜨릴 위험·확인 방법"을
+  적는다 (AHE 논문: 효과는 도구·미들웨어에서, 프롬프트만 바꾸면 하락 · 부작용 예측은 거의 불가능하므로 확인·되돌림 필요).
+- `@rule-deprecator`·`@session-analyzer`: 위반 0% 규칙을 CLAUDE.md로 올리던 "🟢 승격 후보" 기준을 **폐지**하고 삭제 후보로.
+  위반이 잦으면 문구 강화 대신 결정론적 검사로 전환 제안. 새 분류: 🔵 산문 축약(훅이 이미 잡는 규칙) · ↩️ 되돌림 후보(오탐·부작용).
+  6개월 동안 한 번도 걸리지 않은 훅 검사도 삭제 후보.
+
+### 새로 써볼 수 있는 것
+- `/frontend-design` — 랜딩·서비스 소개·첫 화면처럼 시각 방향부터 정해야 할 때. 브리프 초안 → 흔한 AI 기본값 점검 → 승인 → 구현 →
+  자기 비판. Anthropic 공개 스킬(Apache-2.0)의 한국어 수정본으로, 키트의 토큰·폰트·모션 규칙이 우선한다.
+- README § 비용 줄이기 — 개인 설정에서 고를 수 있는 모델·`/clear`·MCP 절제 팁. README § 근거 자료와 반영 내역 — 이번 변경의 출처 표.
+
+### 업그레이드 시 할 일
+- `.claude/settings.json` 수동 병합: `hooks`에 `"Stop": [{"hooks": [{"type": "command", "command": "bash .claude/hooks/check-done.sh",
+  "timeout": 300}]}]`, `permissions.allow`에 `"Bash(npx prettier --write*)"`·`"Bash(npx shadcn@latest add*)"`·`"Bash(npm run check:web-assets*)"`·
+  `"Bash(grep -c*)"`·`"Bash(cat >> docs/questions.md*)"` 추가. `/update-starter`가 새 훅 파일과 함께 제안한다.
+- **아이콘 이전 (파괴적 변경)**: 키트의 `templates/react/src/components/icons/` → `src/components/icons/` 복사 → `icon-style.ts`와
+  README § 스타일 가이드를 제품 컨셉으로 채움 → 지금 쓰는 lucide 아이콘마다 같은 뜻의 프로젝트 아이콘을 새로 그려 교체
+  (`grep -rn "lucide-react" src`가 0줄이 될 때까지). 에이전트에게 "아이콘을 프로젝트 세트로 옮겨줘"라고 맡기면 된다.
+  ESLint를 쓰면 키트의 `eslint.config.example.js`에서 `no-restricted-imports` 블록을 가져온다.
+- **배경색**: `src/styles/tokens.css`에 `--background: #ffffff;`·`--background-subtle: #f9f9f9;`(다크 `oklch(0.18 0 0)`)와
+  `@theme inline`의 `--color-background-subtle: var(--background-subtle);` 추가. 영역 배경에 `bg-muted` 등을 쓰던 곳은 `bg-background-subtle`로.
+- `docs/setup-checklist.md`는 체크 상태가 프로젝트 기록이라 자동으로 바꾸지 않는다. 새 구조로 옮기려면 키트의 파일을 받아 기존 체크를
+  같은 뜻의 ID로 옮겨 적는다(선택). 옮기지 않아도 동작에는 영향이 없다 — 최소한 § 3 디자인 시스템(D1~D4)만 기존 파일에 추가한다.
+- 명도 대비: 키트의 `templates/react/src/styles/tokens.contrast.test.ts` → `src/styles/` 복사 후 `npx vitest run src/styles`. 실패한 쌍은
+  `*-foreground`나 배경 값을 조정한다 (위 세 값이 기본값이었다면 그대로 가져온다).
+- package.json에 `typecheck`·`lint`·`test` 스크립트가 있는지 확인 (없는 항목은 훅이 건너뛴다 — typecheck는 `npx tsc -b --noEmit`로 대신).
+- CLAUDE.md는 수동 병합 — § 작업 방식(새 절)을 가져오고, 없어진 절(기술 스택·작업 규모별 절차·완료 전 자기비판·검증 명령어·
+  에러 수정 루프·컨텍스트 관리)은 지운다. 프로젝트 고유 내용을 그 절에 적어 두었다면 남긴다.
+
 ## v1.9.0 (2026-09-26)
 
 ### 달라진 것
@@ -460,4 +532,7 @@ rm -rf /tmp/rcs-latest
 ### 파괴적 변경 이력
 
 v1.0.0: 초기 릴리스 (파괴적 변경 없음)
+v1.2.0: tokens.css 기본 primary 색 변경 — 브랜드색으로 치환하지 않은 기존 설치는 색이 바뀐다
+v1.5.0: 애니메이션 패키지명 변경(framer-motion → motion) — 기존 설치는 import 경로 이전 필요
 v1.7.0: 없음 — 훅 검사 9는 편집 시점 차단(기존 코드 무영향), outputStyle은 설정 한 줄로 해제 가능
+v2.0.0: 기본 아이콘 팩 금지 — 끝내기 전 검사(check-done.sh)가 `src/` 전체의 lucide 등 import를 찾아 매번 되돌려 보낸다(기존 코드도 영향). 아이콘을 프로젝트 세트로 옮겨야 한다. 같은 훅이 typecheck·lint·test도 돌리므로 기존 실패가 있으면 한 번씩 되돌려 보낸다

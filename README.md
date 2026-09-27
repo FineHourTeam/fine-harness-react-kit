@@ -50,19 +50,30 @@ React + Firebase + Claude Code 루프 엔지니어링 시스템 설치:
 ## 컨텍스트 비용 — 설치하면 얼마나 읽히나
 
 설정이 많을수록 에이전트가 매번 읽어야 할 글이 늘어 작업 공간이 줄어듭니다. 이 키트는 **항상 읽히는 부분을 작게
-두고, 규칙·함정 문서는 상황에 맞는 것만 골라 읽도록** 설계했습니다. v1.8 기준 글자 수:
+두고, 규칙·함정 문서는 상황에 맞는 것만 골라 읽도록** 설계했습니다. v2.0 기준 글자 수:
 
 | 언제 읽히나 | 무엇 | 글자 수 |
 |------------|------|---------|
-| 항상 | `CLAUDE.md` | 약 4,100자 |
+| 항상 | `CLAUDE.md` (104줄) | 약 4,000자 |
 | 항상 | 한국어 문장 품질 output-style | 약 3,000자 |
-| 항상 | 서브에이전트 6종·스킬 6종 설명 | 약 1,000자 |
-| 작업 시작 시 | `knowledge/INDEX.md` (상황별 라우터) | 약 4,100자 |
-| 필요할 때만 | `rules.md`·`pitfalls.md`·`unknown-unknowns.md` | 약 34,000자 중 해당 섹션만 |
+| 항상 | 서브에이전트 6종·스킬 7종 설명 | 약 1,200자 |
+| 작업 시작 시 | `knowledge/INDEX.md` (상황별 라우터) | 약 4,600자 |
+| 필요할 때만 | `rules.md`·`pitfalls.md`·`unknown-unknowns.md` | 약 35,000자 중 해당 섹션만 |
 
 항상·시작 시 합계는 약 1만 2천 자입니다. 토큰으로는 대략 같은 자릿수(수천~1만여 토큰)로, 20만 토큰 작업 공간의 몇 %
 수준입니다. 토큰 수는 글자 수에서 어림한 값이며 모델·언어 비율에 따라 달라집니다. 서브에이전트·스킬 본문은 호출될 때만
-읽힙니다.
+읽힙니다. 훅은 에이전트가 읽는 글이 아니라서 컨텍스트를 쓰지 않고, 규칙을 어겼을 때만 짧은 메시지를 돌려줍니다.
+
+### 비용 줄이기 (선택 — 개인 설정)
+
+키트는 모델을 강제하지 않습니다. 비용이 부담되면 아래를 **개인 설정**(`~/.claude/settings.json`)에서 고르세요.
+
+- **평소엔 Sonnet, 어려운 설계·디버깅만 Opus**: `"model": "sonnet"`으로 두고 필요할 때 `/model opus`.
+- **관련 없는 작업 사이엔 `/clear`**: 이전 작업 대화가 남아 있으면 이후 모든 요청에 그 비용이 붙습니다.
+- **MCP는 필요한 것만**: MCP 서버마다 도구 설명이 작업 공간을 차지합니다. Firebase MCP도 설치 때 쓰는 제품만 켭니다(`--only`).
+- 키트의 서브에이전트는 이미 역할별로 모델을 정해 두었습니다 — 형식대로 한 줄 적는 실수 기록은 Haiku, 판단이 필요한 분석·제안은
+  Sonnet. 모든 서브에이전트를 한꺼번에 Haiku로 바꾸는 전역 설정(`CLAUDE_CODE_SUBAGENT_MODEL`)은 판단 에이전트까지 약해지므로
+  권하지 않습니다.
 
 무료 설정 모음(superpowers·gstack 등)과 함께 써도 됩니다. 이 키트가 맡는 영역은 **React + Firebase 프로젝트의 규칙·검증
 게이트·실수 학습 루프·버전 업데이트**이고, 범용 작업 방식 도구와는 역할이 겹치지 않게 골라 쓰면 됩니다.
@@ -82,6 +93,7 @@ React + Firebase + Claude Code 루프 엔지니어링 시스템 설치:
 | 폼 | react-hook-form + zod v4 | 스키마 = 검증 + 타입 단일 출처 |
 | 스타일 | **Tailwind CSS v4 + shadcn/ui + motion**(구 framer-motion, 3종 기본 조합) | tokens.css(OKLCH CSS 변수)·motion.ts 프리셋이 단일 출처, 다크모드 필수, 절제된 모션 |
 | 컴포넌트·패키지 | **shadcn/ui(Radix) 조합 우선** + 리치포 맵(knowledge/packages.md) | 손수 재구현 금지, 검증된 표준만, 새 런타임 의존성은 4단계 채택 정책 |
+| 아이콘 | 프로젝트 SVG 세트 (`src/components/icons`, 컨셉에 맞게 새로 그림) | lucide 등 기본 아이콘 팩 금지 — "AI가 만든 기본 화면" 인상 제거 |
 | SEO/에셋 | React 19 네이티브 metadata(`<Seo>`) + robots.txt + generate-web-assets(파비콘·OG·PWA) | react-helmet 불필요, 라우트별 title/description·인증뒤 noindex |
 | 백엔드 | Firebase v12 모듈러 SDK | Auth/Firestore/Storage/Hosting/Functions, 에뮬레이터 기본 |
 | 모니터링 | Sentry | **웹은 Crashlytics 미지원** — Ops Loop 감지 소스 |
@@ -117,7 +129,7 @@ React + Firebase + Claude Code 루프 엔지니어링 시스템 설치:
 
 ### 1️⃣ 개발팀 Loop — 세션 안의 실수를 프로젝트 지식으로
 
-`bootstrap.md`로 항상 설치되는 서브에이전트 6종 + 결정론적 훅 2종(편집 즉시 UI 규칙 검사 · 배포 직전 웹 에셋 검사).
+`bootstrap.md`로 항상 설치되는 서브에이전트 6종 + 결정론적 훅 3종(편집 즉시 UI 규칙 검사 · 끝내기 전 검증 · 배포 직전 웹 에셋 검사).
 
 **Push형 — 사건 발생 즉시**
 
@@ -134,8 +146,18 @@ React + Firebase + Claude Code 루프 엔지니어링 시스템 설치:
 
 PostToolUse(Edit|Write) 훅이 하드코딩 색상(Tailwind arbitrary hex·inline style)·빈 콜백 버튼·
 alert/confirm 직접 호출·12px 미만 폰트·dangerouslySetInnerHTML·features 간 직접 import·간격/라운드/
-섀도우 arbitrary value(`p-[13px]` 등)를 편집 즉시 exit 2로 차단해 에이전트에게 피드백한다. 텍스트
+섀도우 arbitrary value(`p-[13px]` 등)·**기본 아이콘 팩(lucide 등)과 화면 코드의 인라인 `<svg>`**·영역 배경의 `bg-muted`를
+편집 즉시 exit 2로 차단해 에이전트에게 피드백한다. 텍스트
 규칙(CLAUDE.md)의 결정론적 백스톱.
+</details>
+
+<details>
+<summary><strong>check-done.sh 훅</strong> — 끝내기 전 검증 자동 실행 · ✅ 구현됨</summary>
+
+Stop 훅이 에이전트가 작업을 끝내려는 순간 `src/`가 바뀌었으면 typecheck·lint·test를 직접 돌리고, 실패하면 오류 요약과 함께
+되돌려 보낸다(exit 2). 문서에만 적힌 "완료 전 검증 필수"는 에이전트가 자주 건너뛴다는 관찰에 따른 결정론적 게이트다.
+질문·문서 작업(`src/` 변경 없음)과 이미 통과한 상태는 다시 돌리지 않고, 한 번 되돌린 뒤에는 무한 반복을 막으려고 통과시킨다
+(그래도 실패가 남으면 에이전트가 완료 보고에 그대로 적는다). build는 느려서 CI와 배포 전 검사가 맡는다.
 </details>
 
 <details>
@@ -242,6 +264,16 @@ knowledge/ 이력과 대조(재발 표시)한 뒤 고정 다이제스트 이슈 
 </details>
 
 <details>
+<summary><strong>/frontend-design</strong> — 랜딩·소개 페이지의 시각 방향 · ✅ 구현됨</summary>
+
+Anthropic 공개 스킬 `frontend-design`(Apache-2.0)의 한국어 수정본. 랜딩·서비스 소개·첫 화면처럼 "이 서비스만의 인상"이
+필요한 화면에서 쓴다. 흔한 AI 기본값(크림 배경+세리프, 똑같은 둥근 카드, 영문 대문자 라벨, 버튼 끝 `→` 등)을 피하도록
+브리프 초안 → 기본값 점검 → 사람 승인 → 구현 → 자기 비판 순서로 진행한다. 원본과 달리 **이 키트의 규칙이 우선**한다 —
+색은 `tokens.css` 용도 토큰으로만, 본문 서체는 Pretendard 유지(제목 서체는 한글 지원 서체만 승인 후 추가), 모션은 `motion` 프리셋.
+이미 디자인이 정해진 일반 기능 화면에는 쓰지 않는다.
+</details>
+
+<details>
 <summary><strong>/generate-web-assets</strong> — 웹 에셋 미리 생성 · ✅ 구현됨</summary>
 
 로고 원본을 `web-assets/logo-source/`에 넣어두면 파비콘 세트·PWA 아이콘·OG 이미지(1200×630)·
@@ -277,7 +309,7 @@ SEED·배민·구름 라이팅 가이드, KatFish ACL 2025)로 정리한 서비�
 <summary><strong>templates/react/ 베이스 코드</strong> — ✅ 구현됨</summary>
 
 tokens.css(디자인 토큰 단일 출처)·firebase/env/query-client/sentry/i18n 단일 지점·인증 가드
-(protected-route)·설정 example(tsconfig strict+/ESLint 9 flat/vite/prettier/index.html)·CI 3종.
+(protected-route)·설정 example(tsconfig strict+/ESLint 9 flat/vite/prettier/index.html)·CI 5종(react-ci · hosting 배포 · sentry-autofix · auto-triage · perf-monitor).
 "브랜드 색 변경" 같은 요청이 토큰 파일 한 곳 수정으로 끝나는 구조.
 </details>
 
@@ -286,6 +318,27 @@ tokens.css(디자인 토큰 단일 출처)·firebase/env/query-client/sentry/i18
 
 이 프로젝트에 어떤 CLI·MCP·API 키·Ops Loop 모듈·웹 에셋이 실제로 연동/설치됐는지 체크박스로 관리한다.
 </details>
+
+---
+
+## 근거 자료와 반영 내역 (v2.0)
+
+v2.0은 하네스 평가·설계에 관한 공개 자료를 조사해 **뺄 것은 빼고 보강할 것은 보강**했습니다. 자료가 다른 도구·벤치마크에서
+나온 경우가 많아, 이 키트에 맞게 옮긴 부분은 추론이 섞여 있습니다. 그래서 반영한 것마다 키트 개선 전후를 같은 작업으로 비교해
+확인하는 방식을 유지합니다.
+
+| 출처 | 핵심 내용 | 키트에 반영한 것 |
+|------|----------|----------------|
+| 팀 디자인 원칙 (FDS) | 아이콘은 제품 컨셉에 맞게 새로 그린다 · 배경은 흰색, 회색은 #f9f9f9 하나 | **프로젝트 SVG 아이콘 세트**(`src/components/icons/` — 설치 때 컨셉으로 스타일을 정하고 기본 13종을 그림, 기본 아이콘 팩은 훅·lint·끝내기 전 검사가 차단) · **`bg-background-subtle`(#f9f9f9)** 토큰과 영역 배경 규칙 |
+| Anthropic, "Demystifying evals for AI agents" (2026-01) | 에이전트가 한 말이 아니라 결과로 채점 · pass^k(모든 시도 성공) · 회귀와 새 능력을 나눠서 잰다 | 키트를 고칠 때마다 같은 작업을 키트 있음·없음으로 반복 실행해, 실제로 동작하는지를 기준으로 비교한다 (규칙을 만들 때 쓰지 않은 작업도 포함) |
+| Claude Code 문서, 플러그인 eval · 스킬 | 스킬 설명은 목록 예산(작업 공간의 1%, 설명당 1,536자)을 쓴다 | 스킬·서브에이전트 설명 길이 점검 — 새 스킬 설명도 예산 안(위 컨텍스트 비용 표) |
+| Böckeler, "Harness engineering for coding agent users" 외 (martinfowler.com, 2026) | 가이드(사전 지시)와 센서(사후 검사)를 함께 · 문서에만 적힌 검증 지시는 자주 건너뜀 · 에이전트가 읽는 오류 메시지에 고치는 법을 · 늘 통과하는 센서는 정리 대상 | **Stop 훅 `check-done.sh`** 로 끝내기 전 검증을 결정론적으로 · 규칙 승격은 훅·lint·테스트를 먼저 고르고 산문은 마지막 |
+| Vats·Golev, "The Scaffold Effect" (arXiv 2607.22585) | 하네스를 바꾸면 성공률은 0~8%p 움직이지만 해결 1건당 토큰은 최대 약 40배 차이 | 비교할 때 성공률과 함께 해결 1건당 비용을 본다 · 질문에 답만 하는 요청은 요청 로그를 생략해 비용을 줄였다 |
+| Lin 외, "Agentic Harness Engineering" (arXiv 2604.25850) | 효과는 도구·미들웨어·메모리 쪽에서, 시스템 프롬프트만 바꾸면 오히려 하락 · 변경이 무엇을 깨뜨릴지는 예측이 거의 안 됨 → 예측을 적고 다음 평가로 확인·되돌림 | `@rule-promoter` 제안에 **강제 수단 서열**(훅 → lint → 테스트 → 설치 → 산문)과 "막을 것·깨뜨릴 위험·확인 방법" · `@rule-deprecator`에 **되돌림 후보** |
+| Gloaguen 외, "Evaluating AGENTS.md" (arXiv 2602.11988) · OpenAI, "Harness engineering" (2026-02) | 저장소 개요·중복 설명이 담긴 컨텍스트 파일은 성공률을 못 올리고 비용만 20% 넘게 늘림 · 짧은 목차형 문서 + 주기적 정리 | CLAUDE.md 131줄 → 104줄(기술 스택 목록·실행할 수 없는 지시 제거) · **안 어기는 규칙을 CLAUDE.md로 올리던 기준 폐지** → 삭제·산문 축약 후보로 |
+| Anthropic `frontend-design` 스킬 (Apache-2.0) | 흔한 AI 디자인 기본값 목록 · 계획 → 기본값 점검 → 구현 → 자기 비판 | **`/frontend-design` 한국어 수정본** — 키트의 토큰·폰트·모션 규칙이 우선 |
+| Karpathy 코딩 지침 (multica-ai/andrej-karpathy-skills, MIT) | 필요한 곳만 고침 · 요청 안 한 추상화 금지 · 검증 가능한 성공 기준 | CLAUDE.md § 작업 방식: 주변 코드·서식 손대지 않기(포매터는 바꾼 파일만) · 한 번 쓰는 코드에 추상화 금지 · 버그는 재현 테스트 먼저 · 가정은 완료 보고에. **"모호하면 멈추고 물어라"는 뺐다** — 이 키트 평가에서 과잉 에스컬레이션이 가장 큰 실패 원인이었다 |
+| everything-claude-code 토큰 최적화 가이드 | 평소 Sonnet · 서브에이전트는 싼 모델 · `/clear`·MCP 절제 | 서브에이전트별 모델 지정(기록은 Haiku, 분석은 Sonnet) · 위 "비용 줄이기" 팁. 전역 서브에이전트 모델 변경·자동 압축 비율 조정은 부작용 보고가 있어 넣지 않았다 |
 
 ---
 
